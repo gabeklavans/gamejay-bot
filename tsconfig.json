@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		/* Visit https://aka.ms/tsconfig.json to read more about this file */
+
+		"target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+		"module": "CommonJS" /* Specify what module code is generated. */,
+		"rootDir": "src",
+		"outDir": "dist" /* Specify an output folder for all emitted files. */,
+		"esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables `allowSyntheticDefaultImports` for type compatibility. */,
+		"forceConsistentCasingInFileNames": true /* Ensure that casing is correct in imports. */,
+		"skipLibCheck": true /* Skip type checking all .d.ts files. */,
+		"strict": true
+	},
+	"include": ["src/**/*"]
+}
