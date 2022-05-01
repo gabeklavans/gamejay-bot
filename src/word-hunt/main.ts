@@ -1,4 +1,4 @@
-import { TextFrequency } from "correct-frequency-random-letters";
+import { TextFrequency } from "../correct-frequency-random-letters/index";
 const letterGenerator = new TextFrequency();
 
 const DEBUG = true;
@@ -87,9 +87,10 @@ function getWordsRecursionHelper(
 // TODO: add a supplementary dict withwords such as:
 // TITS
 async function loadSpellCheck() {
-	const wordList = await fetch("assets/2of12.txt").then((response) =>
-		response.text()
-	);
+	// const wordList = await fetch("assets/2of12.txt").then((response) =>
+	// 	response.text()
+	// );
+	const wordList = "asfd";
 	const wordArr = wordList.split("\r\n");
 
 	return new Set(wordArr);

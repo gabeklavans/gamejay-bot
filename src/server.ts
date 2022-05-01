@@ -1,5 +1,5 @@
 import Fastify from "fastify";
-import * as who from "./word-hunt/main";
+import * as who from "./word-hunt/main.js";
 const fastify = Fastify({
 	logger: true,
 });
