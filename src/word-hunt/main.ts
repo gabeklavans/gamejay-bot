@@ -1,31 +1,15 @@
 import { TextFrequency } from "../correct-frequency-random-letters/index";
 const letterGenerator = new TextFrequency();
-import dictionaryEn from "dictionary-en";
-import nspell from "nspell";
-import util from "util";
 
 const DEBUG = true;
 const GRID_SIZE = 3;
 const tileGrid: Tile[][] = [];
-let spell: nspell;
 
 for (let i = 0; i < GRID_SIZE; i++) {
 	tileGrid.push([]);
 }
 
-export function init() {
-	dictionaryEn(getGoodBoard);
-}
-
-/**
- * Meant to be passed as a callback to the dictionary-en library
- * @param error Error returned by dictionary-en
- * @param dict Dictionary object returned by dictionary-en
- */
-async function getGoodBoard(error: any, dict: any) {
-	if (error) throw error;
-	spell = nspell(dict);
-
+export async function init() {
 	let boardWords = new Set<string>();
 
 	while (boardWords.size < 1) {
@@ -59,9 +43,16 @@ async function getGoodBoard(error: any, dict: any) {
 
 async function getWordsRecursion() {
 	const boardWords = new Set<string>();
+	const dict = await loadSpellCheck();
 	for (const destTile of tileGrid.flat()) {
 		const foundWords = new Set<string>();
-		getWordsRecursionHelper(destTile, new Set<Tile>(), "", foundWords);
+		getWordsRecursionHelper(
+			destTile,
+			new Set<Tile>(),
+			"",
+			foundWords,
+			dict
+		);
 		console.log(`found for ${destTile.letter}:`);
 		console.log(foundWords);
 		foundWords.forEach((foundWord) => boardWords.add(foundWord));
@@ -74,22 +65,35 @@ function getWordsRecursionHelper(
 	source: Tile,
 	visited: Set<Tile>,
 	word: string,
-	foundWords: Set<string>
+	foundWords: Set<string>,
+	dict: Set<string>
 ) {
 	visited.add(source);
 	word += source.letter;
-	if (word.length >= 3 && spell.correct(word.toLowerCase())) {
+	if (word.length >= 3 && dict.has(word.toLowerCase())) {
 		foundWords.add(word);
 	}
 
 	for (const neighbor of getTileNeighbors(source.row, source.col)) {
 		if (!visited.has(neighbor)) {
-			getWordsRecursionHelper(neighbor, visited, word, foundWords);
+			getWordsRecursionHelper(neighbor, visited, word, foundWords, dict);
 		}
 	}
 
 	word = word[word.length - 1];
 	visited.delete(source);
+}
+
+// TODO: add a supplementary dict withwords such as:
+// TITS
+async function loadSpellCheck() {
+	// const wordList = await fetch("assets/2of12.txt").then((response) =>
+	// 	response.text()
+	// );
+	const wordList = "asfd";
+	const wordArr = wordList.split("\r\n");
+
+	return new Set(wordArr);
 }
 
 function getTileNeighbors(row: number, col: number) {
