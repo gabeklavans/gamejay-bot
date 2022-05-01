@@ -9,13 +9,12 @@ fastify.get("/", (req, res) => {
 });
 
 export default async function startServer() {
-	await who.init()
+	await who.init();
 
-	fastify.listen(3000, (err, address) => {
+	fastify.listen(3000, (err) => {
 		if (err) {
 			fastify.log.error(err);
 			process.exit(1);
 		}
-		fastify.log.info(`Server is now listening on ${address}`);
 	});
 }
