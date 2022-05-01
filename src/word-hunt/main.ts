@@ -1,21 +1,30 @@
 import { TextFrequency } from "../correct-frequency-random-letters/index";
 const letterGenerator = new TextFrequency();
 import dictionaryEn from "dictionary-en";
-import util from "util";
-const getDictionaryEn = util.promisify(dictionaryEn);
 import nspell from "nspell";
+import util from "util";
 
 const DEBUG = true;
 const GRID_SIZE = 3;
 const tileGrid: Tile[][] = [];
+let spell: nspell;
 
 for (let i = 0; i < GRID_SIZE; i++) {
 	tileGrid.push([]);
 }
 
-export async function init() {
-	const dict = await getDictionaryEn();
-	const spell = nspell(dict);
+export function init() {
+	dictionaryEn(getGoodBoard);
+}
+
+/**
+ * Meant to be passed as a callback to the dictionary-en library
+ * @param error Error returned by dictionary-en
+ * @param dict Dictionary object returned by dictionary-en
+ */
+async function getGoodBoard(error: any, dict: any) {
+	if (error) throw error;
+	spell = nspell(dict);
 
 	let boardWords = new Set<string>();
 
@@ -35,7 +44,7 @@ export async function init() {
 		}
 
 		// get all the words in the board
-		boardWords = await getWordsRecursion(spell);
+		boardWords = await getWordsRecursion();
 		if (DEBUG) {
 			// eslint-disable-next-line no-console
 			console.log(boardWords);
@@ -48,17 +57,11 @@ export async function init() {
 	}
 }
 
-async function getWordsRecursion(spell: nspell) {
+async function getWordsRecursion() {
 	const boardWords = new Set<string>();
 	for (const destTile of tileGrid.flat()) {
 		const foundWords = new Set<string>();
-		getWordsRecursionHelper(
-			destTile,
-			new Set<Tile>(),
-			"",
-			foundWords,
-			spell
-		);
+		getWordsRecursionHelper(destTile, new Set<Tile>(), "", foundWords);
 		console.log(`found for ${destTile.letter}:`);
 		console.log(foundWords);
 		foundWords.forEach((foundWord) => boardWords.add(foundWord));
@@ -71,8 +74,7 @@ function getWordsRecursionHelper(
 	source: Tile,
 	visited: Set<Tile>,
 	word: string,
-	foundWords: Set<string>,
-	spell: nspell
+	foundWords: Set<string>
 ) {
 	visited.add(source);
 	word += source.letter;
@@ -82,7 +84,7 @@ function getWordsRecursionHelper(
 
 	for (const neighbor of getTileNeighbors(source.row, source.col)) {
 		if (!visited.has(neighbor)) {
-			getWordsRecursionHelper(neighbor, visited, word, foundWords, spell);
+			getWordsRecursionHelper(neighbor, visited, word, foundWords);
 		}
 	}
 
