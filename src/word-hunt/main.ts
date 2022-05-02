@@ -1,11 +1,11 @@
 import pfBoggle from "pf-boggle";
 
-const DEBUG = true;
+const DEBUG = false;
 const GRID_SIZE = 4;
 const MIN_WORDS = 30;
 const NUM_BOARDS = 10;
 
-const boards: { board: string[]; words: Set<string> }[] = [];
+const boards: { board: string[]; words: string[] }[] = [];
 
 async function init() {
 	await genBoards();
@@ -44,6 +44,7 @@ async function genBoards() {
 			}
 			board = pfBoggle.generate(GRID_SIZE);
 			const solutions = pfBoggle.solve(board);
+
 			boardWords = new Set(
 				solutions
 					.map((solution) => solution.word)
@@ -52,7 +53,7 @@ async function genBoards() {
 		}
 		boards.push({
 			board,
-			words: boardWords,
+			words: Array.from(boardWords),
 		});
 	}
 }
