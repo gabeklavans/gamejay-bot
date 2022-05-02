@@ -1,11 +1,16 @@
 import Fastify from "fastify";
-import * as who from "./word-hunt/main.js";
+import who from "./word-hunt/main";
 const fastify = Fastify({
 	logger: true,
 });
 
 fastify.get("/", (req, res) => {
 	res.send({ hello: "world" });
+});
+
+fastify.get("/board", async (req, res) => {
+	const rhetBoard = await who.getBoardWithSolutions();
+	res.send(rhetBoard);
 });
 
 export default async function startServer() {
