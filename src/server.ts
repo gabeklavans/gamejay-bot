@@ -1,7 +1,11 @@
 import Fastify from "fastify";
+import fastifyCors from "@fastify/cors";
 import who from "./word-hunt/main";
 const fastify = Fastify({
 	logger: true,
+});
+fastify.register(fastifyCors, {
+	origin: true,
 });
 
 fastify.get("/", (req, res) => {

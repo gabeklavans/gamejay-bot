@@ -20,42 +20,46 @@ async function getBoardWithSolutions() {
 	let rhetBoard = boards.pop();
 
 	if (!rhetBoard) {
-		console.warn("Ran out of boards! Generating more...");
-		// TODO: Create gen primative where it just makes a single board
-		// Use prmative here, and make genBoards call primative
-		await genBoards();
-		rhetBoard = boards.pop();
+		console.warn("Ran out of boards! Generating a new one...");
+		rhetBoard = genBoard();
 	}
 
 	// fill up board slots async
+	// NOTE: nodejs is single threaded so this probably won't result in a race condition?
 	genBoards();
 
 	return rhetBoard!;
 }
 
-async function genBoards() {
+function genBoards() {
 	// TODO: Maybe implement a timeout error
 	while (boards.length < NUM_BOARDS) {
-		let boardWords = new Set<string>();
-		let board: string[] = [];
-		while (boardWords.size < MIN_WORDS) {
-			if (DEBUG) {
-				console.log(`generating new board ${board.length + 1}...`);
-			}
-			board = pfBoggle.generate(GRID_SIZE);
-			const solutions = pfBoggle.solve(board);
-
-			boardWords = new Set(
-				solutions
-					.map((solution) => solution.word)
-					.filter((word) => word.length > 2)
-			);
-		}
-		boards.push({
-			board,
-			words: Array.from(boardWords),
-		});
+		boards.push(genBoard());
 	}
+}
+
+function genBoard() {
+	let boardWords = new Set<string>();
+	let board: string[] = [];
+	while (boardWords.size < MIN_WORDS) {
+		if (DEBUG) {
+			console.log(`generating new board ${board.length + 1}...`);
+		}
+		board = pfBoggle
+			.generate(GRID_SIZE)
+			.map((letter) => letter.slice(0, 1)); // I guess boggle considers QU a letter...
+		const solutions = pfBoggle.solve(board);
+
+		boardWords = new Set(
+			solutions
+				.map((solution) => solution.word)
+				.filter((word) => word.length > 2)
+		);
+	}
+	return {
+		board,
+		words: Array.from(boardWords),
+	};
 }
 
 export default {
