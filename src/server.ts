@@ -17,10 +17,20 @@ fastify.get("/board", async (req, res) => {
 	res.send(rhetBoard);
 });
 
+fastify.post("/result", (req, res) => {
+	const body: {
+		score: number;
+		words: string[];
+	} = JSON.parse(req.body as string);
+	console.log(`User got a score of ${body.score}!!!\nWith words:`);
+	console.log(body.words);
+	console.log("===========");
+});
+
 export default async function startServer() {
 	await who.init();
 
-	fastify.listen(3000, (err) => {
+	fastify.listen(3000, "192.168.0.42", (err) => {
 		if (err) {
 			fastify.log.error(err);
 			process.exit(1);
