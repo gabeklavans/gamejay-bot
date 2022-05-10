@@ -7,3 +7,10 @@ declare module "pf-boggle" {
 
 	export { generate, solve };
 }
+
+declare module "fastify-disablecache";
+
+interface WordHuntParams {
+	chatId: string;
+	messageId: string;
+}
