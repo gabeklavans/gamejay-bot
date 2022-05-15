@@ -16,7 +16,7 @@ async function init() {
 	}
 }
 
-async function getBoardWithSolutions() {
+async function getBoardWithSolutions(): Promise<Board> {
 	let rhetBoard = boards.pop();
 
 	if (!rhetBoard) {
@@ -25,7 +25,7 @@ async function getBoardWithSolutions() {
 	}
 
 	// fill up board slots async
-	// NOTE: nodejs is single threaded so this probably won't result in a race condition?
+	// NOTE: Node is single threaded so this probably won't result in a race condition?
 	genBoards();
 
 	return rhetBoard!;

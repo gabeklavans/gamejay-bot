@@ -10,7 +10,12 @@ declare module "pf-boggle" {
 
 declare module "fastify-disablecache";
 
-interface WordHuntParams {
+interface JoinParams {
 	chatId: string;
 	messageId: string;
 }
+
+type Board = {
+	board: string[];
+	words: string[];
+};

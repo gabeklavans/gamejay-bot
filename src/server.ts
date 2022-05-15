@@ -1,58 +1,56 @@
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import disableCache from "fastify-disablecache";
-import who from "./word-hunt/main";
+import whoRoutes from "./word-hunt/routes";
 import { createHash, randomUUID } from "crypto";
+import { Game, GameURL, PlayerMax } from "./constants";
 
-enum Game {
-	WORD_HUNT,
-}
+import who from "./word-hunt/main";
 
 const fastify = Fastify({
-	logger: true,
+	logger: { level: "debug" },
 });
 fastify.register(fastifyCors, {
 	origin: true,
 });
 fastify.register(disableCache);
 
-fastify.get("/board", async (req, res) => {
-	const rhetBoard = await who.getBoardWithSolutions();
-	res.send(rhetBoard);
-});
+// register game routes
+fastify.register(whoRoutes, { prefix: "/who" });
 
 fastify.get<{
-	Params: WordHuntParams;
-}>("/join-game/:chatId/:messageId", (req, res) => {
+	Params: JoinParams;
+}>("/join-game/:chatId/:messageId", async (req, res) => {
 	const { chatId, messageId } = req.params;
 
 	const sessionId = hashTgCallback(chatId, messageId);
 
-	if (!sessions[sessionId]) {
-		startSession(Game.WORD_HUNT, sessionId);
+	if (!gameSessions[sessionId]) {
+		// TODO: Start a wordhunt game by default; will need a way to specify the game later
+		await startSession(Game.WORD_HUNT, sessionId);
 	}
 
-	switch (sessions[sessionId].game) {
-		case Game.WORD_HUNT:
-			res.redirect(`http://192.168.0.42:8081?session=${sessionId}`);
-			return;
-	}
-});
+	const session = gameSessions[sessionId];
+	// NOTE: this probably isn't a race condition? Node is single-threaded right?
+	if (session.playerCount < PlayerMax[session.game]) {
+		gameSessions[sessionId].playerCount++;
 
-fastify.post("/result", (req, res) => {
-	const body: {
-		score: number;
-		words: string[];
-	} = JSON.parse(req.body as string);
-	console.log(`User got a score of ${body.score}!!!\nWith words:`);
-	console.log(body.words);
-	console.log("===========");
+		switch (gameSessions[sessionId].game) {
+			case Game.WORD_HUNT:
+				res.redirect(`${GameURL[Game.WORD_HUNT]}?session=${sessionId}`);
+				break;
+		}
+	} else {
+		// game is full, go into spectator mode
+		res.send(`You have entered spectator mode for ${Game[Game.WORD_HUNT]}`);
+		// TODO: implement spectator mode
+	}
 });
 
 export default async function startServer() {
 	await who.init();
 
-	fastify.listen(3000, "192.168.0.42", (err) => {
+	fastify.listen(3000, "127.0.0.1", (err) => {
 		if (err) {
 			fastify.log.error(err);
 			process.exit(1);
@@ -60,9 +58,12 @@ export default async function startServer() {
 	});
 }
 
-const sessions: {
+export const gameSessions: {
 	[key: string]: {
 		game: Game;
+		board?: Board;
+		playerCount: number;
+		turnCount: number;
 		done: boolean;
 	};
 } = {};
@@ -73,9 +74,14 @@ const sessions: {
  * @param uid The ID to be used for the session
  * @returns The ID used for the session
  */
-export function startSession(game: Game, uid?: string) {
+export async function startSession(game: Game, uid?: string) {
 	const gameId = uid ? uid : randomUUID();
-	sessions[gameId] = { done: false, game };
+	gameSessions[gameId] = { done: false, game, playerCount: 0, turnCount: 0 };
+	switch (game) {
+		case Game.WORD_HUNT:
+			gameSessions[gameId].board = await who.getBoardWithSolutions();
+			break;
+	}
 	return gameId;
 }
 
