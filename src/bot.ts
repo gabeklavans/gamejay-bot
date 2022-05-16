@@ -18,11 +18,17 @@ bot.command("game", async (ctx) => {
 bot.on("message", (ctx) => ctx.reply("Got another message!"));
 
 bot.on("callback_query:game_short_name", async (ctx) => {
+	if (ctx.callbackQuery.from.is_bot) {
+		// Silly bot, games are for users!
+		return;
+	}
+
 	const messageId = ctx.callbackQuery.message
 		? ctx.callbackQuery.message.message_id
 		: -1;
-	const sessionId = await ctx.answerCallbackQuery({
-		url: `http://127.0.0.1:3000/join-game/${ctx.callbackQuery.chat_instance}/${messageId}`,
+
+	await ctx.answerCallbackQuery({
+		url: `http://127.0.0.1:3000/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}`,
 	});
 });
 

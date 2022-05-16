@@ -1,7 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { gameSessions } from "../server";
 import httpError from "http-errors";
-import { TurnMax } from "../constants";
+import { DEFAULT_SCORE, TurnMax } from "../constants";
 
 export default (
 	fastify: FastifyInstance,
@@ -21,24 +21,53 @@ export default (
 	});
 
 	fastify.post<{
-		Params: { sessionId: string };
-	}>("/result/:sessionId", (req, res) => {
-		const session = gameSessions[req.params.sessionId];
-		if (session) {
-			session.turnCount++;
-			if (session.turnCount == TurnMax[session.game]) {
-				// game is done, calculate winner
-				// TODO: ^
-				console.log("============ It's over.");
-			}
+		Params: { sessionId: string; userId: string };
+	}>("/result/:sessionId/:userId", (req, res) => {
+		const { sessionId, userId } = req.params;
+		if (!sessionId || !userId) {
+			fastify.log.error(
+				`Invalid URL params, sessionId: ${sessionId}, userId: ${userId}.`
+			);
+			return;
 		}
-		const body: {
+		const session = gameSessions[sessionId];
+		const { score, words } = JSON.parse(req.body as string) as {
 			score: number;
 			words: string[];
-		} = JSON.parse(req.body as string);
-		fastify.log.debug(`User got a score of ${body.score}!!!\nWith words:`);
-		fastify.log.debug(body.words);
-		fastify.log.debug("===========");
+		};
+
+		// TODO: generalize these error for all games... they should work for all
+		if (!session) {
+			fastify.log.error(`Session with ID ${sessionId} does not exist.`);
+			return;
+		}
+		if (!session.scores[userId]) {
+			fastify.log.error(`User ${userId} did not join this game.`);
+			return;
+		}
+		if (session.scores[userId] !== DEFAULT_SCORE) {
+			fastify.log.error(
+				`User ${userId} already submitted a score of ${session.scores[userId]}.`
+			);
+			return;
+		}
+		if (score < 0) {
+			fastify.log.error(`Score of ${score} is less than 0.`);
+			return;
+		}
+
+		session.turnCount++;
+		session.scores[userId] = score;
+
+		console.log(`User ${userId} got a score of ${score}!!!\nWith words:`);
+		console.log(words);
+
+		if (session.turnCount == TurnMax[session.game]) {
+			// TODO: report the winner to telegram
+			// TODO: Save session to database so we don't have to keep it in memory...
+			fastify.log.debug(`Game ${sessionId} over. Saving to database...`);
+			// I want this ^ so ppl can go to their games and see things like the scores and potential words
+		}
 	});
 
 	done();

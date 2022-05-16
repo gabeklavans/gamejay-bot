@@ -1,9 +1,10 @@
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import disableCache from "fastify-disablecache";
+import httpError from "http-errors";
 import whoRoutes from "./word-hunt/routes";
 import { createHash, randomUUID } from "crypto";
-import { Game, GameURL, PlayerMax } from "./constants";
+import { DEFAULT_SCORE, Game, GameURL, PlayerMax } from "./constants";
 
 import who from "./word-hunt/main";
 
@@ -20,8 +21,13 @@ fastify.register(whoRoutes, { prefix: "/who" });
 
 fastify.get<{
 	Params: JoinParams;
-}>("/join-game/:chatId/:messageId", async (req, res) => {
-	const { chatId, messageId } = req.params;
+}>("/join-game/:chatId/:messageId/:userId", async (req, res) => {
+	const { chatId, messageId, userId } = req.params;
+	if (!userId) {
+		fastify.log.error(`Invalid URL params, userId: ${userId}.`);
+		res.send(httpError.BadRequest);
+		return;
+	}
 
 	const sessionId = hashTgCallback(chatId, messageId);
 
@@ -32,16 +38,26 @@ fastify.get<{
 
 	const session = gameSessions[sessionId];
 	// NOTE: this probably isn't a race condition? Node is single-threaded right?
-	if (session.playerCount < PlayerMax[session.game]) {
-		gameSessions[sessionId].playerCount++;
+	if (
+		!session.scores[userId] &&
+		session.playerCount < PlayerMax[session.game]
+	) {
+		const session = gameSessions[sessionId];
+		session.playerCount++;
+		session.scores[userId] = DEFAULT_SCORE;
 
 		switch (gameSessions[sessionId].game) {
 			case Game.WORD_HUNT:
-				res.redirect(`${GameURL[Game.WORD_HUNT]}?session=${sessionId}`);
+				res.redirect(
+					`${
+						GameURL[Game.WORD_HUNT]
+					}?session=${sessionId}&user=${userId}`
+				);
 				break;
 		}
 	} else {
 		// game is full, go into spectator mode
+		// TODO: replace with selected game
 		res.send(`You have entered spectator mode for ${Game[Game.WORD_HUNT]}`);
 		// TODO: implement spectator mode
 	}
@@ -64,6 +80,7 @@ export const gameSessions: {
 		board?: Board;
 		playerCount: number;
 		turnCount: number;
+		scores: { [key: string]: number };
 		done: boolean;
 	};
 } = {};
@@ -76,7 +93,13 @@ export const gameSessions: {
  */
 export async function startSession(game: Game, uid?: string) {
 	const gameId = uid ? uid : randomUUID();
-	gameSessions[gameId] = { done: false, game, playerCount: 0, turnCount: 0 };
+	gameSessions[gameId] = {
+		game,
+		playerCount: 0,
+		turnCount: 0,
+		scores: {},
+		done: false,
+	};
 	switch (game) {
 		case Game.WORD_HUNT:
 			gameSessions[gameId].board = await who.getBoardWithSolutions();

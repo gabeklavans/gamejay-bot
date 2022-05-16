@@ -13,6 +13,7 @@ declare module "fastify-disablecache";
 interface JoinParams {
 	chatId: string;
 	messageId: string;
+	userId: string;
 }
 
 type Board = {
