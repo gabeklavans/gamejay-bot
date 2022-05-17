@@ -5,7 +5,7 @@ export enum Game {
 }
 
 export const GameURL: { [key in Game]: string } = {
-	[Game.WORD_HUNT]: "http://localhost:8081",
+	[Game.WORD_HUNT]: process.env.WORD_HUNT_URL as string,
 };
 
 export const PlayerMax: { [key in Game]: number } = {

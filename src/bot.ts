@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { Bot, InlineKeyboard } from "grammy";
 
 if (!process.env.BOT_API_KEY) {
@@ -28,7 +27,7 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 		: -1;
 
 	await ctx.answerCallbackQuery({
-		url: `http://127.0.0.1:3000/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}`,
+		url: `${process.env.SERVER_URL}/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}`,
 	});
 });
 
