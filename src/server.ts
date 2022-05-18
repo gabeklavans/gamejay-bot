@@ -44,7 +44,10 @@ fastify.get<{
 	) {
 		const session = gameSessions[sessionId];
 		session.playerCount++;
-		session.scores[userId] = DEFAULT_SCORE;
+		session.scores[userId] = {
+			score: DEFAULT_SCORE,
+			words: [],
+		};
 
 		switch (gameSessions[sessionId].game) {
 			case Game.WORD_HUNT:
@@ -57,8 +60,15 @@ fastify.get<{
 		}
 	} else {
 		// game is full, go into spectator mode
-		// TODO: replace with selected game
-		res.send(`You have entered spectator mode for ${Game[Game.WORD_HUNT]}`);
+		switch (gameSessions[sessionId].game) {
+			case Game.WORD_HUNT:
+				res.redirect(
+					`${
+						GameURL[Game.WORD_HUNT]
+					}?session=${sessionId}&user=${userId}&spectate=true`
+				);
+				break;
+		}
 		// TODO: implement spectator mode
 	}
 });
@@ -80,7 +90,7 @@ export const gameSessions: {
 		board?: Board;
 		playerCount: number;
 		turnCount: number;
-		scores: { [key: string]: number };
+		scores: { [key: string]: { score: number; words?: string[] } };
 		done: boolean;
 	};
 } = {};

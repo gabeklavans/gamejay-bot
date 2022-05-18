@@ -11,19 +11,21 @@ export default (
 	fastify.get<{
 		Params: { sessionId: string };
 	}>("/board/:sessionId", (req, res) => {
-		const rhetBoard = gameSessions[req.params.sessionId].board;
+		const { sessionId } = req.params;
+
+		const rhetBoard = gameSessions[sessionId].board;
 		if (!rhetBoard) {
 			res.send(httpError.InternalServerError);
 			return;
 		}
 		res.send(rhetBoard);
-		return;
 	});
 
 	fastify.post<{
 		Params: { sessionId: string; userId: string };
 	}>("/result/:sessionId/:userId", (req, res) => {
 		const { sessionId, userId } = req.params;
+
 		if (!sessionId || !userId) {
 			fastify.log.error(
 				`Invalid URL params, sessionId: ${sessionId}, userId: ${userId}.`
@@ -45,7 +47,7 @@ export default (
 			fastify.log.error(`User ${userId} did not join this game.`);
 			return;
 		}
-		if (session.scores[userId] !== DEFAULT_SCORE) {
+		if (session.scores[userId].score !== DEFAULT_SCORE) {
 			fastify.log.error(
 				`User ${userId} already submitted a score of ${session.scores[userId]}.`
 			);
@@ -57,7 +59,8 @@ export default (
 		}
 
 		session.turnCount++;
-		session.scores[userId] = score;
+		session.scores[userId].score = score;
+		session.scores[userId].words = words;
 
 		console.log(`User ${userId} got a score of ${score}!!!\nWith words:`);
 		console.log(words);
@@ -65,9 +68,25 @@ export default (
 		if (session.turnCount == TurnMax[session.game]) {
 			// TODO: report the winner to telegram
 			// TODO: Save session to database so we don't have to keep it in memory...
+			session.done = true;
 			fastify.log.debug(`Game ${sessionId} over. Saving to database...`);
 			// I want this ^ so ppl can go to their games and see things like the scores and potential words
 		}
+	});
+
+	fastify.get<{
+		Params: { sessionId: string };
+	}>("/session/:sessionId", (req, res) => {
+		const { sessionId } = req.params;
+
+		const session = gameSessions[sessionId];
+		const sessionView = {
+			board: session.board,
+			scores: session.scores,
+			done: session.done,
+		};
+
+		res.send(sessionView);
 	});
 
 	done();
