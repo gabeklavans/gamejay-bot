@@ -4,7 +4,7 @@ import disableCache from "fastify-disablecache";
 import httpError from "http-errors";
 import whoRoutes from "./word-hunt/routes";
 import { createHash, randomUUID } from "crypto";
-import { DEFAULT_SCORE, Game, GameURL, PlayerMax } from "./constants";
+import { DEFAULT_SCORE, Game, GameURL, PlayerMax, TurnMax } from "./constants";
 
 import who from "./word-hunt/main";
 
@@ -20,7 +20,11 @@ fastify.register(disableCache);
 fastify.register(whoRoutes, { prefix: "/who" });
 
 fastify.get<{
-	Params: JoinParams;
+	Params: {
+		chatId: string;
+		messageId: string;
+		userId: string;
+	};
 }>("/join-game/:chatId/:messageId/:userId", async (req, res) => {
 	const { chatId, messageId, userId } = req.params;
 	if (!userId) {
@@ -70,6 +74,59 @@ fastify.get<{
 				break;
 		}
 		// TODO: implement spectator mode
+	}
+});
+
+fastify.post<{
+	Params: { sessionId: string; userId: string };
+}>("/result/:sessionId/:userId", (req, res) => {
+	const { sessionId, userId } = req.params;
+
+	if (!sessionId || !userId) {
+		fastify.log.error(
+			`Invalid URL params, sessionId: ${sessionId}, userId: ${userId}.`
+		);
+		return;
+	}
+	const session = gameSessions[sessionId];
+	const body: any = JSON.parse(req.body as string);
+	const score: number = body.score;
+
+	if (!session) {
+		fastify.log.error(`Session with ID ${sessionId} does not exist.`);
+		return;
+	}
+	if (!session.scores[userId]) {
+		fastify.log.error(`User ${userId} did not join this game.`);
+		return;
+	}
+	if (session.scores[userId].score !== DEFAULT_SCORE) {
+		fastify.log.error(
+			`User ${userId} already submitted a score of ${session.scores[userId]}.`
+		);
+		return;
+	}
+	if (score < 0) {
+		fastify.log.error(`Score of ${score} is less than 0.`);
+		return;
+	}
+
+	session.turnCount++;
+	session.scores[userId].score = score;
+
+	// set game-specific values here
+	switch (session.game) {
+		case Game.WORD_HUNT:
+			session.scores[userId].words = body.words;
+			break;
+	}
+
+	if (session.turnCount == TurnMax[session.game]) {
+		// TODO: report the winner to telegram
+		// TODO: Save session to database so we don't have to keep it in memory...
+		session.done = true;
+		fastify.log.debug(`Game ${sessionId} over. Saving to database...`);
+		// I want this ^ so ppl can go to their games and see things like the scores and potential words (in word hunt)
 	}
 });
 
