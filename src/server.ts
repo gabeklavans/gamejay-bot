@@ -12,7 +12,7 @@ const fastify = Fastify({
 	logger: { level: "debug" },
 });
 fastify.register(fastifyCors, {
-	origin: false,
+	origin: ["http://dabe.tech", "http://leet.dabe.tech"],
 });
 fastify.register(disableCache);
 
