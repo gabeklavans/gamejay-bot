@@ -133,7 +133,7 @@ fastify.post<{
 export default async function startServer() {
 	await who.init();
 
-	fastify.listen(3000, "127.0.0.1", (err) => {
+	fastify.listen(3000, (err) => {
 		if (err) {
 			fastify.log.error(err);
 			process.exit(1);
