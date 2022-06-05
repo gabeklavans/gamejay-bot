@@ -12,7 +12,7 @@ const fastify = Fastify({
 	logger: { level: "debug" },
 });
 fastify.register(fastifyCors, {
-	origin: true,
+	origin: false,
 });
 fastify.register(disableCache);
 
