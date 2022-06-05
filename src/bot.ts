@@ -11,7 +11,7 @@ const keyboard = new InlineKeyboard().game("Join session!");
 bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));
 
 bot.command("game", async (ctx) => {
-	await ctx.replyWithGame("WordHunt", { reply_markup: keyboard });
+	await ctx.replyWithGame(process.env.WORD_HUNT_SHORTNAME as string, { reply_markup: keyboard });
 });
 
 bot.on("message", (ctx) => ctx.reply("Got another message!"));
