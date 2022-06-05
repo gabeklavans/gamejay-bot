@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { Bot, InlineKeyboard } from "grammy";
 
 if (!process.env.BOT_API_KEY) {
@@ -18,11 +17,17 @@ bot.command("game", async (ctx) => {
 bot.on("message", (ctx) => ctx.reply("Got another message!"));
 
 bot.on("callback_query:game_short_name", async (ctx) => {
+	if (ctx.callbackQuery.from.is_bot) {
+		// Silly bot, games are for users!
+		return;
+	}
+
 	const messageId = ctx.callbackQuery.message
 		? ctx.callbackQuery.message.message_id
 		: -1;
-	const sessionId = await ctx.answerCallbackQuery({
-		url: `http://leet.dabe.tech:3000/join-game/${ctx.callbackQuery.chat_instance}/${messageId}`,
+
+	await ctx.answerCallbackQuery({
+		url: `${process.env.SERVER_URL}/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}`,
 	});
 });
 
