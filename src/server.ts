@@ -34,7 +34,7 @@ fastify.get<{
 
 	switch (sessions[sessionId].game) {
 		case Game.WORD_HUNT:
-			res.redirect(`http://192.168.0.42:8081?session=${sessionId}`);
+			res.redirect(`http://leet.dabe.tech:8081?session=${sessionId}`);
 			return;
 	}
 });

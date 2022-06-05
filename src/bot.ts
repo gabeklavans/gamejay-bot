@@ -22,7 +22,7 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 		? ctx.callbackQuery.message.message_id
 		: -1;
 	const sessionId = await ctx.answerCallbackQuery({
-		url: `http://192.168.0.42:3000/join-game/${ctx.callbackQuery.chat_instance}/${messageId}`,
+		url: `http://leet.dabe.tech:3000/join-game/${ctx.callbackQuery.chat_instance}/${messageId}`,
 	});
 });
 
