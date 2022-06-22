@@ -22,6 +22,9 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 		return;
 	}
 
+	console.log(ctx.callbackQuery);
+	
+
 	const messageId = ctx.callbackQuery.message
 		? ctx.callbackQuery.message.message_id
 		: -1;
