@@ -12,7 +12,7 @@ const fastify = Fastify({
 	logger: { level: "debug" },
 });
 fastify.register(fastifyCors, {
-	origin: true,
+	origin: ["http://dabe.tech", "http://leet.dabe.tech"],
 });
 fastify.register(disableCache);
 
@@ -133,7 +133,7 @@ fastify.post<{
 export default async function startServer() {
 	await who.init();
 
-	fastify.listen(3000, "127.0.0.1", (err) => {
+	fastify.listen(3000, "192.168.1.2", (err) => {
 		if (err) {
 			fastify.log.error(err);
 			process.exit(1);
