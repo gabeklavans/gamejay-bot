@@ -9,7 +9,7 @@ export const GameURL: { [key in Game]: string } = {
 };
 
 export const PlayerMax: { [key in Game]: number } = {
-	[Game.WORD_HUNT]: 2,
+	[Game.WORD_HUNT]: Number.MAX_VALUE,
 };
 
 export const TurnMax: { [key in Game]: number } = {
