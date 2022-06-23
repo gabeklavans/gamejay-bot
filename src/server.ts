@@ -11,8 +11,9 @@ import who from "./word-hunt/main";
 const fastify = Fastify({
 	logger: { level: "debug" },
 });
+const validDomains = (process.env.CORS_ACCESS as string).split(",");
 fastify.register(fastifyCors, {
-	origin: ["http://dabe.tech", "http://leet.dabe.tech"],
+	origin: validDomains.length > 1 ? validDomains : validDomains[0],
 });
 fastify.register(disableCache);
 
@@ -133,7 +134,7 @@ fastify.post<{
 export default async function startServer() {
 	await who.init();
 
-	fastify.listen(3000, "192.168.1.2", (err) => {
+	fastify.listen(3000, process.env.SERVER_DOMAIN as string, (err) => {
 		if (err) {
 			fastify.log.error(err);
 			process.exit(1);
