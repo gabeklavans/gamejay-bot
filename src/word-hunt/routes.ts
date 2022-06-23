@@ -28,7 +28,7 @@ export default (
 		const session = gameSessions[sessionId];
 		const sessionView = {
 			board: session.board,
-			scores: session.scores,
+			scoredUsers: session.scoredUsers,
 			done: session.done,
 		};
 

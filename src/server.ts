@@ -25,9 +25,10 @@ fastify.get<{
 		chatId: string;
 		messageId: string;
 		userId: string;
+		userName: string;
 	};
-}>("/join-game/:chatId/:messageId/:userId", async (req, res) => {
-	const { chatId, messageId, userId } = req.params;
+}>("/join-game/:chatId/:messageId/:userId/:userName", async (req, res) => {
+	const { chatId, messageId, userId, userName } = req.params;
 	if (!userId) {
 		fastify.log.error(`Invalid URL params, userId: ${userId}.`);
 		res.send(httpError.BadRequest);
@@ -44,14 +45,15 @@ fastify.get<{
 	const session = gameSessions[sessionId];
 	// NOTE: this probably isn't a race condition? Node is single-threaded right?
 	if (
-		!session.scores[userId] &&
+		!session.scoredUsers[userId] &&
 		session.playerCount < PlayerMax[session.game]
 	) {
 		const session = gameSessions[sessionId];
 		session.playerCount++;
-		session.scores[userId] = {
+		session.scoredUsers[userId] = {
 			score: DEFAULT_SCORE,
 			words: [],
+			name: userName,
 		};
 
 		switch (gameSessions[sessionId].game) {
@@ -97,13 +99,13 @@ fastify.post<{
 		fastify.log.error(`Session with ID ${sessionId} does not exist.`);
 		return;
 	}
-	if (!session.scores[userId]) {
+	if (!session.scoredUsers[userId]) {
 		fastify.log.error(`User ${userId} did not join this game.`);
 		return;
 	}
-	if (session.scores[userId].score !== DEFAULT_SCORE) {
+	if (session.scoredUsers[userId].score !== DEFAULT_SCORE) {
 		fastify.log.error(
-			`User ${userId} already submitted a score of ${session.scores[userId]}.`
+			`User ${userId} already submitted a score of ${session.scoredUsers[userId]}.`
 		);
 		return;
 	}
@@ -113,12 +115,12 @@ fastify.post<{
 	}
 
 	session.turnCount++;
-	session.scores[userId].score = score;
+	session.scoredUsers[userId].score = score;
 
 	// set game-specific values here
 	switch (session.game) {
 		case Game.WORD_HUNT:
-			session.scores[userId].words = body.words;
+			session.scoredUsers[userId].words = body.words;
 			break;
 	}
 
@@ -148,7 +150,9 @@ export const gameSessions: {
 		board?: Board;
 		playerCount: number;
 		turnCount: number;
-		scores: { [key: string]: { score: number; words?: string[] } };
+		scoredUsers: {
+			[key: string]: { score: number; words?: string[]; name: string };
+		};
 		done: boolean;
 	};
 } = {};
@@ -165,7 +169,7 @@ export async function startSession(game: Game, uid?: string) {
 		game,
 		playerCount: 0,
 		turnCount: 0,
-		scores: {},
+		scoredUsers: {},
 		done: false,
 	};
 	switch (game) {

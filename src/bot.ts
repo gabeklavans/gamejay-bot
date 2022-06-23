@@ -30,7 +30,7 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 		: -1;
 
 	await ctx.answerCallbackQuery({
-		url: `${process.env.SERVER_URL}/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}`,
+		url: `${process.env.SERVER_URL}/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}`,
 	});
 });
 
