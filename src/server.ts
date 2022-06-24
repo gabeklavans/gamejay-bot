@@ -4,7 +4,7 @@ import disableCache from "fastify-disablecache";
 import httpError from "http-errors";
 import whoRoutes from "./word-hunt/routes";
 import { createHash, randomUUID } from "crypto";
-import { DEFAULT_SCORE, Game, GameURL, PlayerMax, TurnMax } from "./constants";
+import { Game, GameURL, PlayerMax, TurnMax } from "./constants";
 
 import who from "./word-hunt/main";
 
@@ -51,7 +51,6 @@ fastify.get<{
 		const session = gameSessions[sessionId];
 		session.playerCount++;
 		session.scoredUsers[userId] = {
-			score: DEFAULT_SCORE,
 			words: [],
 			name: userName,
 		};
@@ -103,7 +102,7 @@ fastify.post<{
 		fastify.log.error(`User ${userId} did not join this game.`);
 		return;
 	}
-	if (session.scoredUsers[userId].score !== DEFAULT_SCORE) {
+	if (session.scoredUsers[userId].score) {
 		fastify.log.error(
 			`User ${userId} already submitted a score of ${session.scoredUsers[userId]}.`
 		);
@@ -151,7 +150,7 @@ export const gameSessions: {
 		playerCount: number;
 		turnCount: number;
 		scoredUsers: {
-			[key: string]: { score: number; words?: string[]; name: string };
+			[key: string]: { score?: number; words?: string[]; name: string };
 		};
 		done: boolean;
 	};

@@ -1,5 +1,3 @@
-export const DEFAULT_SCORE = -1;
-
 export enum Game {
 	WORD_HUNT,
 }
