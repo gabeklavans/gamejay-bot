@@ -11,7 +11,9 @@ const keyboard = new InlineKeyboard().game("Join session!");
 bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));
 
 bot.command("game", async (ctx) => {
-	await ctx.replyWithGame(process.env.WORD_HUNT_SHORTNAME as string, { reply_markup: keyboard });
+	await ctx.replyWithGame(process.env.WORD_HUNT_SHORTNAME as string, {
+		reply_markup: keyboard,
+	});
 });
 
 bot.on("message", (ctx) => ctx.reply("Got another message!"));
@@ -23,15 +25,18 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 	}
 
 	console.log(ctx.callbackQuery);
-	
 
-	const messageId = ctx.callbackQuery.message
-		? ctx.callbackQuery.message.message_id
-		: -1;
-
-	await ctx.answerCallbackQuery({
-		url: `${process.env.SERVER_URL}/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}`,
-	});
+	const messageId = ctx.callbackQuery.message?.message_id;
+	if (messageId) {
+		await ctx.answerCallbackQuery({
+			url: `${process.env.SERVER_URL}/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}`,
+		});
+	} else {
+		await ctx.answerCallbackQuery({
+			text: `Games cannot be forwarded from other chats. Please create a new game in this chat by typing "@${bot.botInfo.username} <game-name>"`,
+			show_alert: true,
+		});
+	}
 });
 
 export default function startBot() {
