@@ -16,8 +16,6 @@ bot.command("game", async (ctx) => {
 	});
 });
 
-bot.on("message", (ctx) => ctx.reply("Got another message!"));
-
 bot.on("callback_query:game_short_name", async (ctx) => {
 	if (ctx.callbackQuery.from.is_bot) {
 		// Silly bot, games are for users!
