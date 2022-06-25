@@ -31,6 +31,9 @@ export default async function startServer() {
 }
 
 type GameSession = {
+	chatId?: string;
+	messageId?: string;
+	inlineId?: string;
 	game: Game;
 	board?: Board;
 	playerCount: number;

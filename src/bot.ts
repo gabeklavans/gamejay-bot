@@ -1,4 +1,4 @@
-import { Bot, InlineKeyboard } from "grammy";
+import { Api, Bot, InlineKeyboard } from "grammy";
 
 if (!process.env.BOT_API_KEY) {
 	console.error("environment misconfigured");
@@ -24,18 +24,29 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 
 	console.log(ctx.callbackQuery);
 
-	const messageId =
-		ctx.callbackQuery.message?.message_id || ctx.inlineMessageId;
-	if (messageId) {
-		await ctx.answerCallbackQuery({
-			url: `${process.env.SERVER_URL}/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}`,
-		});
+	let chatId;
+	let messageId;
+	let isInline = false;
+
+	if (ctx.callbackQuery.message) {
+		chatId = ctx.callbackQuery.message.chat.id;
+		messageId = ctx.callbackQuery.message.message_id;
+	}
+	if (ctx.callbackQuery.inline_message_id) {
+		chatId = ctx.callbackQuery.chat_instance;
+		messageId = ctx.callbackQuery.inline_message_id;
+		isInline = true;
 	} else {
 		await ctx.answerCallbackQuery({
-			text: `This game has gone missing... Try sending a new game request.`,
+			text: `This game has gone missing... Try creating a new game request.`,
 			show_alert: true,
 		});
+		return;
 	}
+
+	await ctx.answerCallbackQuery({
+		url: `${process.env.SERVER_URL}/join-game/${chatId}/${messageId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}/${isInline}`,
+	});
 });
 
 bot.on("inline_query", (ctx) => {
