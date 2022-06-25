@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
-import { FastifyInstance } from "fastify";
-import { Api } from "grammy";
+import { FastifyInstance, FastifyReply } from "fastify";
+import { Api, GrammyError } from "grammy";
+import { Server, IncomingMessage, ServerResponse } from "http";
 import httpError from "http-errors";
 import { Game, GameURL, PlayerMax, TurnMax } from "./constants";
 import { gameSessions } from "./server";
@@ -14,73 +15,44 @@ export default (
 ) => {
 	fastify.get<{
 		Params: {
+			inlineId: string;
+			userId: string;
+			userName: string;
+		};
+	}>("/join-game/:inlineId/:userId/:userName", async (req, res) => {
+		const { inlineId, userId, userName } = req.params;
+		if (!userId) {
+			fastify.log.error(`Invalid URL params, userId: ${userId}.`);
+			res.send(httpError.BadRequest);
+			return;
+		}
+
+		const sessionId = hashTgCallback("pingas", inlineId);
+		const chatInfo = { inlineId };
+
+		await handleJoinSession(sessionId, chatInfo, userId, userName, res);
+	});
+
+	fastify.get<{
+		Params: {
 			chatId: string;
 			messageId: string;
 			userId: string;
 			userName: string;
-			isInline: boolean;
 		};
-	}>(
-		"/join-game/:chatId/:messageId/:userId/:userName/:isInline",
-		async (req, res) => {
-			const { chatId, messageId, userId, userName, isInline } =
-				req.params;
-			if (!userId) {
-				fastify.log.error(`Invalid URL params, userId: ${userId}.`);
-				res.send(httpError.BadRequest);
-				return;
-			}
-
-			const sessionId = hashTgCallback(chatId, messageId);
-
-			if (!gameSessions[sessionId]) {
-				// TODO: Start a wordhunt game by default; will need a way to specify the game later
-				await startSession(
-					Game.WORD_HUNT,
-					chatId,
-					messageId,
-					isInline,
-					sessionId
-				);
-			}
-
-			const session = gameSessions[sessionId];
-			// NOTE: this probably isn't a race condition? Node is single-threaded right?
-			if (
-				!session.scoredUsers[userId] &&
-				session.playerCount < PlayerMax[session.game]
-			) {
-				const session = gameSessions[sessionId];
-				session.playerCount++;
-				session.scoredUsers[userId] = {
-					words: [],
-					name: userName,
-				};
-
-				switch (gameSessions[sessionId].game) {
-					case Game.WORD_HUNT:
-						res.redirect(
-							`${
-								GameURL[Game.WORD_HUNT]
-							}?session=${sessionId}&user=${userId}`
-						);
-						break;
-				}
-			} else {
-				// game is full, go into spectator mode
-				switch (gameSessions[sessionId].game) {
-					case Game.WORD_HUNT:
-						res.redirect(
-							`${
-								GameURL[Game.WORD_HUNT]
-							}?session=${sessionId}&user=${userId}&spectate=true`
-						);
-						break;
-				}
-				// TODO: implement spectator mode
-			}
+	}>("/join-game/:chatId/:messageId/:userId/:userName", async (req, res) => {
+		const { chatId, messageId, userId, userName } = req.params;
+		if (!userId) {
+			fastify.log.error(`Invalid URL params, userId: ${userId}.`);
+			res.send(httpError.BadRequest);
+			return;
 		}
-	);
+
+		const sessionId = hashTgCallback(chatId, messageId);
+		const chatInfo = { chatId, messageId };
+
+		await handleJoinSession(sessionId, chatInfo, userId, userName, res);
+	});
 
 	fastify.post<{
 		Params: { sessionId: string; userId: string };
@@ -124,14 +96,14 @@ export default (
 				gameSession.inlineId,
 				parseInt(userId),
 				score
-			);
+			).catch(handleScoreUpdateErr);
 		} else if (gameSession.chatId && gameSession.messageId) {
 			api.setGameScore(
 				parseInt(gameSession.chatId),
 				parseInt(gameSession.messageId),
 				parseInt(userId),
 				score
-			);
+			).catch(handleScoreUpdateErr);
 		}
 
 		// set game-specific values here
@@ -149,24 +121,67 @@ export default (
 	done();
 };
 
+async function handleJoinSession(
+	sessionId: string,
+	chatInfo: ChatInfo,
+	userId: string,
+	userName: string,
+	res: FastifyReply<Server, IncomingMessage, ServerResponse, any, unknown>
+) {
+	if (!gameSessions[sessionId]) {
+		// TODO: Start a wordhunt game by default; will need a way to specify the game later
+		await startSession(Game.WORD_HUNT, chatInfo, sessionId);
+	}
+
+	const session = gameSessions[sessionId];
+	// NOTE: this probably isn't a race condition? Node is single-threaded right?
+	if (
+		!session.scoredUsers[userId] &&
+		session.playerCount < PlayerMax[session.game]
+	) {
+		const session = gameSessions[sessionId];
+		session.playerCount++;
+		session.scoredUsers[userId] = {
+			words: [],
+			name: userName,
+		};
+
+		switch (gameSessions[sessionId].game) {
+			case Game.WORD_HUNT:
+				res.redirect(
+					`${
+						GameURL[Game.WORD_HUNT]
+					}?session=${sessionId}&user=${userId}`
+				);
+				break;
+		}
+	} else {
+		// game is full, go into spectator mode
+		switch (gameSessions[sessionId].game) {
+			case Game.WORD_HUNT:
+				res.redirect(
+					`${
+						GameURL[Game.WORD_HUNT]
+					}?session=${sessionId}&user=${userId}&spectate=true`
+				);
+				break;
+		}
+		// TODO: implement spectator mode
+	}
+}
+
 /**
  *
  * @param game The game to join a session of
  * @param uid The ID to be used for the session
  * @returns The ID used for the session
  */
-async function startSession(
-	game: Game,
-	chatId: string,
-	messageId: string,
-	isInline: boolean,
-	uid?: string
-) {
+async function startSession(game: Game, chatInfo: ChatInfo, uid?: string) {
 	const gameId = uid ? uid : randomUUID();
 	gameSessions[gameId] = {
-		chatId: !isInline ? chatId : undefined,
-		messageId: !isInline ? messageId : undefined,
-		inlineId: isInline ? messageId : undefined,
+		chatId: chatInfo.chatId,
+		messageId: chatInfo.messageId,
+		inlineId: chatInfo.inlineId,
 		game,
 		playerCount: 0,
 		turnCount: 0,
@@ -179,4 +194,12 @@ async function startSession(
 			break;
 	}
 	return gameId;
+}
+
+function handleScoreUpdateErr(err: GrammyError) {
+	if (err.description.includes("BOT_SCORE_NOT_MODIFIED")) {
+		console.warn("Score not modified");
+	} else {
+		console.error(err);
+	}
 }

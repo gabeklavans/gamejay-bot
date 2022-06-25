@@ -14,3 +14,9 @@ type Board = {
 	board: string[];
 	words: string[];
 };
+
+type ChatInfo = {
+	chatId?: string;
+	messageId?: string;
+	inlineId?: string;
+};
