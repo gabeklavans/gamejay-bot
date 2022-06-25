@@ -26,17 +26,28 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 
 	console.log(ctx.callbackQuery);
 
-	const messageId = ctx.callbackQuery.message?.message_id;
+	const messageId =
+		ctx.callbackQuery.message?.message_id || ctx.inlineMessageId;
 	if (messageId) {
 		await ctx.answerCallbackQuery({
 			url: `${process.env.SERVER_URL}/join-game/${ctx.callbackQuery.chat_instance}/${messageId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}`,
 		});
 	} else {
 		await ctx.answerCallbackQuery({
-			text: `Games cannot be forwarded from other chats. Please create a new game in this chat by typing "@${bot.botInfo.username} <game-name>"`,
+			text: `This game has gone missing... Try sending a new game request.`,
 			show_alert: true,
 		});
 	}
+});
+
+bot.on("inline_query", (ctx) => {
+	ctx.answerInlineQuery([
+		{
+			type: "game",
+			id: "1",
+			game_short_name: "who",
+		},
+	]);
 });
 
 export default function startBot() {
