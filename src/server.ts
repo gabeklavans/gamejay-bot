@@ -1,10 +1,9 @@
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import disableCache from "fastify-disablecache";
-import httpError from "http-errors";
 import whoRoutes from "./word-hunt/routes";
-import { createHash, randomUUID } from "crypto";
-import { Game, GameURL, PlayerMax, TurnMax } from "./constants";
+import mainRoutes from "./routes";
+import { Game } from "./constants";
 
 import who from "./word-hunt/main";
 
@@ -17,116 +16,8 @@ fastify.register(fastifyCors, {
 });
 fastify.register(disableCache);
 
-// register game routes
+fastify.register(mainRoutes);
 fastify.register(whoRoutes, { prefix: "/who" });
-
-fastify.get<{
-	Params: {
-		chatId: string;
-		messageId: string;
-		userId: string;
-		userName: string;
-	};
-}>("/join-game/:chatId/:messageId/:userId/:userName", async (req, res) => {
-	const { chatId, messageId, userId, userName } = req.params;
-	if (!userId) {
-		fastify.log.error(`Invalid URL params, userId: ${userId}.`);
-		res.send(httpError.BadRequest);
-		return;
-	}
-
-	const sessionId = hashTgCallback(chatId, messageId);
-
-	if (!gameSessions[sessionId]) {
-		// TODO: Start a wordhunt game by default; will need a way to specify the game later
-		await startSession(Game.WORD_HUNT, sessionId);
-	}
-
-	const session = gameSessions[sessionId];
-	// NOTE: this probably isn't a race condition? Node is single-threaded right?
-	if (
-		!session.scoredUsers[userId] &&
-		session.playerCount < PlayerMax[session.game]
-	) {
-		const session = gameSessions[sessionId];
-		session.playerCount++;
-		session.scoredUsers[userId] = {
-			words: [],
-			name: userName,
-		};
-
-		switch (gameSessions[sessionId].game) {
-			case Game.WORD_HUNT:
-				res.redirect(
-					`${
-						GameURL[Game.WORD_HUNT]
-					}?session=${sessionId}&user=${userId}`
-				);
-				break;
-		}
-	} else {
-		// game is full, go into spectator mode
-		switch (gameSessions[sessionId].game) {
-			case Game.WORD_HUNT:
-				res.redirect(
-					`${
-						GameURL[Game.WORD_HUNT]
-					}?session=${sessionId}&user=${userId}&spectate=true`
-				);
-				break;
-		}
-		// TODO: implement spectator mode
-	}
-});
-
-fastify.post<{
-	Params: { sessionId: string; userId: string };
-}>("/result/:sessionId/:userId", (req, res) => {
-	const { sessionId, userId } = req.params;
-
-	if (!sessionId || !userId) {
-		fastify.log.error(
-			`Invalid URL params, sessionId: ${sessionId}, userId: ${userId}.`
-		);
-		return;
-	}
-	const gameSession = gameSessions[sessionId];
-	const body: any = JSON.parse(req.body as string);
-	const score: number = body.score;
-
-	if (!gameSession) {
-		fastify.log.error(`Session with ID ${sessionId} does not exist.`);
-		return;
-	}
-	if (!gameSession.scoredUsers[userId]) {
-		fastify.log.error(`User ${userId} did not join this game.`);
-		return;
-	}
-	if (gameSession.scoredUsers[userId].score) {
-		fastify.log.error(
-			`User ${userId} already submitted a score of ${gameSession.scoredUsers[userId]}.`
-		);
-		return;
-	}
-	if (score < 0) {
-		fastify.log.error(`Score of ${score} is less than 0.`);
-		return;
-	}
-
-	gameSession.turnCount++;
-	gameSession.scoredUsers[userId].score = score;
-
-	// set game-specific values here
-	switch (gameSession.game) {
-		case Game.WORD_HUNT:
-			gameSession.scoredUsers[userId].words = body.words;
-			break;
-	}
-
-	if (gameSession.turnCount == TurnMax[gameSession.game]) {
-		endSession(sessionId);
-	}
-});
 
 export default async function startServer() {
 	await who.init();
@@ -153,42 +44,3 @@ type GameSession = {
 export const gameSessions: {
 	[key: string]: GameSession;
 } = {};
-
-/**
- *
- * @param game The game to join a session of
- * @param uid The ID to be used for the session
- * @returns The ID used for the session
- */
-export async function startSession(game: Game, uid?: string) {
-	const gameId = uid ? uid : randomUUID();
-	gameSessions[gameId] = {
-		game,
-		playerCount: 0,
-		turnCount: 0,
-		scoredUsers: {},
-		done: false,
-	};
-	switch (game) {
-		case Game.WORD_HUNT:
-			gameSessions[gameId].board = await who.getBoardWithSolutions();
-			break;
-	}
-	return gameId;
-}
-
-function endSession(sessionId: string) {
-	const gameSession = gameSessions[sessionId];
-	// TODO: report the winner to telegram
-	// TODO: Save session to database so we don't have to keep it in memory...
-	gameSession.done = true;
-	fastify.log.debug(`Game ${sessionId} over. Saving to database...`);
-	// I want this ^ so ppl can go to their games and see things like the scores and potential words (in word hunt)
-}
-
-function hashTgCallback(chatId: string, messageId: string) {
-	const hash = createHash("sha1");
-	hash.update(chatId);
-	hash.update(messageId);
-	return hash.digest().toString("base64url");
-}
