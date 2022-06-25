@@ -90,21 +90,21 @@ fastify.post<{
 		);
 		return;
 	}
-	const session = gameSessions[sessionId];
+	const gameSession = gameSessions[sessionId];
 	const body: any = JSON.parse(req.body as string);
 	const score: number = body.score;
 
-	if (!session) {
+	if (!gameSession) {
 		fastify.log.error(`Session with ID ${sessionId} does not exist.`);
 		return;
 	}
-	if (!session.scoredUsers[userId]) {
+	if (!gameSession.scoredUsers[userId]) {
 		fastify.log.error(`User ${userId} did not join this game.`);
 		return;
 	}
-	if (session.scoredUsers[userId].score) {
+	if (gameSession.scoredUsers[userId].score) {
 		fastify.log.error(
-			`User ${userId} already submitted a score of ${session.scoredUsers[userId]}.`
+			`User ${userId} already submitted a score of ${gameSession.scoredUsers[userId]}.`
 		);
 		return;
 	}
@@ -113,22 +113,18 @@ fastify.post<{
 		return;
 	}
 
-	session.turnCount++;
-	session.scoredUsers[userId].score = score;
+	gameSession.turnCount++;
+	gameSession.scoredUsers[userId].score = score;
 
 	// set game-specific values here
-	switch (session.game) {
+	switch (gameSession.game) {
 		case Game.WORD_HUNT:
-			session.scoredUsers[userId].words = body.words;
+			gameSession.scoredUsers[userId].words = body.words;
 			break;
 	}
 
-	if (session.turnCount == TurnMax[session.game]) {
-		// TODO: report the winner to telegram
-		// TODO: Save session to database so we don't have to keep it in memory...
-		session.done = true;
-		fastify.log.debug(`Game ${sessionId} over. Saving to database...`);
-		// I want this ^ so ppl can go to their games and see things like the scores and potential words (in word hunt)
+	if (gameSession.turnCount == TurnMax[gameSession.game]) {
+		endSession(sessionId);
 	}
 });
 
@@ -143,17 +139,19 @@ export default async function startServer() {
 	});
 }
 
-export const gameSessions: {
-	[key: string]: {
-		game: Game;
-		board?: Board;
-		playerCount: number;
-		turnCount: number;
-		scoredUsers: {
-			[key: string]: { score?: number; words?: string[]; name: string };
-		};
-		done: boolean;
+type GameSession = {
+	game: Game;
+	board?: Board;
+	playerCount: number;
+	turnCount: number;
+	scoredUsers: {
+		[key: string]: { score?: number; words?: string[]; name: string };
 	};
+	done: boolean;
+};
+
+export const gameSessions: {
+	[key: string]: GameSession;
 } = {};
 
 /**
@@ -177,6 +175,15 @@ export async function startSession(game: Game, uid?: string) {
 			break;
 	}
 	return gameId;
+}
+
+function endSession(sessionId: string) {
+	const gameSession = gameSessions[sessionId];
+	// TODO: report the winner to telegram
+	// TODO: Save session to database so we don't have to keep it in memory...
+	gameSession.done = true;
+	fastify.log.debug(`Game ${sessionId} over. Saving to database...`);
+	// I want this ^ so ppl can go to their games and see things like the scores and potential words (in word hunt)
 }
 
 function hashTgCallback(chatId: string, messageId: string) {
