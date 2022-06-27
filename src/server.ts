@@ -30,7 +30,7 @@ export default async function startServer() {
 	});
 }
 
-type GameSession = {
+export type GameSession = {
 	chatId?: string;
 	messageId?: string;
 	inlineId?: string;

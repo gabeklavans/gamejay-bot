@@ -1,10 +1,10 @@
 import { randomUUID } from "crypto";
 import { FastifyInstance, FastifyReply } from "fastify";
-import { Api, GrammyError } from "grammy";
+import { Api, GrammyError, RawApi } from "grammy";
 import { Server, IncomingMessage, ServerResponse } from "http";
 import httpError from "http-errors";
 import { Game, GameURL, PlayerMax, TurnMax } from "./constants";
-import { gameSessions } from "./server";
+import { GameSession, gameSessions } from "./server";
 import { endSession, hashTgCallback } from "./utils";
 import who from "./word-hunt/main";
 
@@ -56,7 +56,7 @@ export default (
 
 	fastify.post<{
 		Params: { sessionId: string; userId: string };
-	}>("/result/:sessionId/:userId", (req, res) => {
+	}>("/result/:sessionId/:userId", async (req, res) => {
 		const { sessionId, userId } = req.params;
 
 		if (!sessionId || !userId) {
@@ -91,19 +91,79 @@ export default (
 		gameSession.turnCount++;
 		gameSession.scoredUsers[userId].score = score;
 		const api = new Api(process.env.BOT_API_KEY!);
-		if (gameSession.inlineId) {
-			api.setGameScoreInline(
-				gameSession.inlineId,
-				parseInt(userId),
-				score
-			).catch(handleScoreUpdateErr);
-		} else if (gameSession.chatId && gameSession.messageId) {
-			api.setGameScore(
-				parseInt(gameSession.chatId),
-				parseInt(gameSession.messageId),
-				parseInt(userId),
-				score
-			).catch(handleScoreUpdateErr);
+
+		const scoreEntries = Object.entries(gameSession.scoredUsers);
+		// figure out a winner/new winner
+		if (scoreEntries.length > 2) {
+			// there are more than 2 players now, so need to rebalance scores
+			scoreEntries.sort(
+				(a, b) =>
+					(a[1].score ?? Number.MIN_SAFE_INTEGER) -
+					(b[1].score ?? Number.MIN_SAFE_INTEGER)
+			);
+			const winner = scoreEntries[0];
+			if (winner[0] == userId) {
+				const oldWinner = scoreEntries[1];
+				const oldWinnerGameScore = (
+					await getGameScore(gameSession, api, oldWinner[0])
+				)?.find(
+					(gameScore) => gameScore.user.id.toString() === oldWinner[0]
+				);
+				const newWinnerGameScore = (
+					await getGameScore(gameSession, api, winner[0])
+				)?.find(
+					(gameScore) => gameScore.user.id.toString() === winner[0]
+				);
+				if (oldWinnerGameScore) {
+					// there was an old winner, so take away from them and give to new winner
+					setGameScore(
+						gameSession,
+						api,
+						oldWinner[0],
+						oldWinnerGameScore.score - 1,
+						true
+					);
+					setGameScore(
+						gameSession,
+						api,
+						winner[0],
+						newWinnerGameScore ? newWinnerGameScore.score + 1 : 1,
+						true
+					);
+				} else {
+					console.error(
+						"Old winner has never won, which should be impossible..."
+					);
+				}
+			}
+		} else if (scoreEntries.length > 1) {
+			// only two players, just get the winner
+
+			// make sure both players finished
+			if (scoreEntries.every((entry) => entry[1].score)) {
+				scoreEntries.sort(
+					(a, b) =>
+						(a[1].score ?? Number.MIN_SAFE_INTEGER) -
+						(b[1].score ?? Number.MIN_SAFE_INTEGER)
+				);
+
+				const winner = scoreEntries[0];
+				if (winner[1].score) {
+					const winnerGameScore = (
+						await getGameScore(gameSession, api, winner[0])
+					)?.find(
+						(gameScore) =>
+							gameScore.user.id.toString() === winner[0]
+					);
+					setGameScore(
+						gameSession,
+						api,
+						winner[0],
+						winnerGameScore ? winnerGameScore.score + 1 : 1,
+						true
+					);
+				}
+			}
 		}
 
 		// set game-specific values here
@@ -120,6 +180,51 @@ export default (
 
 	done();
 };
+
+function setGameScore(
+	gameSession: GameSession,
+	api: Api<RawApi>,
+	userId: string,
+	score: number,
+	force: boolean = false
+) {
+	if (gameSession.inlineId) {
+		api.setGameScoreInline(gameSession.inlineId, parseInt(userId), score, {
+			force,
+		}).catch(handleScoreUpdateErr);
+	} else if (gameSession.chatId && gameSession.messageId) {
+		api.setGameScore(
+			parseInt(gameSession.chatId),
+			parseInt(gameSession.messageId),
+			parseInt(userId),
+			score,
+			{ force }
+		).catch(handleScoreUpdateErr);
+	}
+}
+
+async function getGameScore(
+	gameSession: GameSession,
+	api: Api<RawApi>,
+	userId: string
+) {
+	try {
+		if (gameSession.inlineId) {
+			return await api.getGameHighScoresInline(
+				gameSession.inlineId,
+				parseInt(userId)
+			);
+		} else if (gameSession.chatId && gameSession.messageId) {
+			return await api.getGameHighScores(
+				parseInt(gameSession.chatId),
+				parseInt(gameSession.messageId),
+				parseInt(userId)
+			);
+		}
+	} catch (err) {
+		console.error(err);
+	}
+}
 
 async function handleJoinSession(
 	sessionId: string,
