@@ -98,8 +98,8 @@ export default (
 			// there are more than 2 players now, so need to rebalance scores
 			scoreEntries.sort(
 				(a, b) =>
-					(a[1].score ?? Number.MIN_SAFE_INTEGER) -
-					(b[1].score ?? Number.MIN_SAFE_INTEGER)
+					(b[1].score ?? Number.MIN_SAFE_INTEGER) -
+					(a[1].score ?? Number.MIN_SAFE_INTEGER)
 			);
 			const winner = scoreEntries[0];
 			if (winner[0] == userId) {
@@ -143,8 +143,8 @@ export default (
 			if (scoreEntries.every((entry) => entry[1].score)) {
 				scoreEntries.sort(
 					(a, b) =>
-						(a[1].score ?? Number.MIN_SAFE_INTEGER) -
-						(b[1].score ?? Number.MIN_SAFE_INTEGER)
+						(b[1].score ?? Number.MIN_SAFE_INTEGER) -
+						(a[1].score ?? Number.MIN_SAFE_INTEGER)
 				);
 
 				const winner = scoreEntries[0];
