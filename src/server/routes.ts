@@ -75,6 +75,7 @@ export default (
 					type: "object",
 					properties: {
 						score: { type: "number" },
+						words: { type: "array", items: { type: "string" } },
 					},
 				},
 			},
@@ -89,7 +90,7 @@ export default (
 				return;
 			}
 			const gameSession = gameSessions[sessionId];
-			const body: any = JSON.parse(req.body as string);
+			const body = req.body as ResultsBody;
 			const score: number = body.score;
 
 			if (!gameSession) {

@@ -21,6 +21,11 @@ type ChatInfo = {
 	inlineId?: string;
 };
 
+type ResultsBody = {
+	score: number;
+	words: string[];
+};
+
 type ScoreEntry = {
 	score?: number;
 	words?: string[];
