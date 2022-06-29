@@ -20,3 +20,10 @@ type ChatInfo = {
 	messageId?: string;
 	inlineId?: string;
 };
+
+type ScoreEntry = {
+	score?: number;
+	words?: string[];
+	name: string;
+	id: string;
+};

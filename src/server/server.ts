@@ -3,7 +3,7 @@ import fastifyCors from "@fastify/cors";
 import disableCache from "fastify-disablecache";
 import whoRoutes from "./word-hunt/routes";
 import mainRoutes from "./routes";
-import { Game } from "./constants";
+import { Game } from "../constants";
 
 import who from "./word-hunt/main";
 

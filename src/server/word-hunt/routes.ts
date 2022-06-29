@@ -17,6 +17,7 @@ export default (
 			res.send(httpError.InternalServerError);
 			return;
 		}
+		
 		res.send(rhetBoard);
 	});
 
@@ -26,6 +27,12 @@ export default (
 		const { sessionId } = req.params;
 
 		const session = gameSessions[sessionId];
+
+		if (!session) {
+			res.send(httpError.NotFound);
+			return;
+		}
+
 		const sessionView = {
 			board: session.board,
 			scoredUsers: session.scoredUsers,

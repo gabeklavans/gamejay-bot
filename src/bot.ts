@@ -22,8 +22,6 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 		return;
 	}
 
-	console.log(ctx.callbackQuery);
-
 	try {
 		if (ctx.callbackQuery.message) {
 			const chatId = ctx.callbackQuery.message.chat.id;
