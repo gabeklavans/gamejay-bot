@@ -60,54 +60,76 @@ export default (
 
 	fastify.post<{
 		Params: { sessionId: string; userId: string };
-	}>("/result/:sessionId/:userId", (req) => {
-		const { sessionId, userId } = req.params;
+	}>(
+		"/result/:sessionId/:userId",
+		{
+			schema: {
+				params: {
+					type: "object",
+					properties: {
+						sessionId: { type: "string" },
+						userId: { type: "number" },
+					},
+				},
+				body: {
+					type: "object",
+					properties: {
+						score: { type: "number" },
+					},
+				},
+			},
+		},
+		(req) => {
+			const { sessionId, userId } = req.params;
 
-		if (!sessionId || !userId) {
-			fastify.log.error(
-				`Invalid URL params, sessionId: ${sessionId}, userId: ${userId}.`
-			);
-			return;
-		}
-		const gameSession = gameSessions[sessionId];
-		const body: any = JSON.parse(req.body as string);
-		const score: number = body.score;
+			if (!sessionId || !userId) {
+				fastify.log.error(
+					`Invalid URL params, sessionId: ${sessionId}, userId: ${userId}.`
+				);
+				return;
+			}
+			const gameSession = gameSessions[sessionId];
+			const body: any = JSON.parse(req.body as string);
+			const score: number = body.score;
 
-		if (!gameSession) {
-			fastify.log.error(`Session with ID ${sessionId} does not exist.`);
-			return;
-		}
-		if (!gameSession.scoredUsers[userId]) {
-			fastify.log.error(`User ${userId} did not join this game.`);
-			return;
-		}
-		if (gameSession.scoredUsers[userId].score) {
-			fastify.log.error(
-				`User ${userId} already submitted a score of ${gameSession.scoredUsers[userId]}.`
-			);
-			return;
-		}
-		if (score < 0) {
-			fastify.log.error(`Score of ${score} is less than 0.`);
-			return;
-		}
+			if (!gameSession) {
+				fastify.log.error(
+					`Session with ID ${sessionId} does not exist.`
+				);
+				return;
+			}
+			if (!gameSession.scoredUsers[userId]) {
+				fastify.log.error(`User ${userId} did not join this game.`);
+				return;
+			}
+			if (gameSession.scoredUsers[userId].score) {
+				fastify.log.error(
+					`User ${userId} already submitted a score of ${gameSession.scoredUsers[userId]}.`
+				);
+				return;
+			}
+			if (score < 0) {
+				fastify.log.error(`Score of ${score} is less than 0.`);
+				return;
+			}
 
-		gameSession.turnCount++;
-		gameSession.scoredUsers[userId].score = score;
+			gameSession.turnCount++;
+			gameSession.scoredUsers[userId].score = score;
 
-		calcAndSetHighScores(gameSession, userId).catch(console.error);
+			calcAndSetHighScores(gameSession, userId).catch(console.error);
 
-		// set game-specific values here
-		switch (gameSession.game) {
-			case Game.WORD_HUNT:
-				gameSession.scoredUsers[userId].words = body.words;
-				break;
+			// set game-specific values here
+			switch (gameSession.game) {
+				case Game.WORD_HUNT:
+					gameSession.scoredUsers[userId].words = body.words;
+					break;
+			}
+
+			if (gameSession.turnCount == TurnMax[gameSession.game]) {
+				endSession(sessionId);
+			}
 		}
-
-		if (gameSession.turnCount == TurnMax[gameSession.game]) {
-			endSession(sessionId);
-		}
-	});
+	);
 
 	done();
 };

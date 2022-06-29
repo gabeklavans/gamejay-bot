@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import disableCache from "fastify-disablecache";
+import oas from "fastify-oas";
 import whoRoutes from "./word-hunt/routes";
 import mainRoutes from "./routes";
 import { Game } from "../constants";
@@ -16,6 +17,34 @@ fastify.register(fastifyCors, {
 });
 fastify.register(disableCache);
 
+fastify.register(oas, {
+	routePrefix: "/docs",
+	swagger: {
+		info: {
+			title: "GameJay API",
+			description: "Internal API for GameJay server.",
+			version: "0.0.1",
+		},
+		servers: [
+			{
+				url: "http://192.168.1.42:3000",
+				description: "Melinoe",
+			},
+			{
+				url: "http://leet.dabe.tech:3000",
+				description: "L33t server",
+			},
+		],
+		externalDocs: {
+			url: "https://swagger.io",
+			description: "Find more info here",
+		},
+		consumes: ["application/json"],
+		produces: ["application/json"],
+	},
+	exposeRoute: true,
+});
+
 fastify.register(mainRoutes);
 fastify.register(whoRoutes, { prefix: "/who" });
 
@@ -27,6 +56,7 @@ export default async function startServer() {
 			fastify.log.error(err);
 			process.exit(1);
 		}
+		fastify.oas();
 	});
 }
 
