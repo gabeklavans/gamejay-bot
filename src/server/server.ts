@@ -52,7 +52,7 @@ fastify.register(whoRoutes, { prefix: "/who" });
 
 if (process.env.NODE_ENV === "production") {
 	fastify.post(
-		`/test`,
+		`${process.env.WEBHOOK_SECRET}`,
 		{
 			onError: (req, res, err, done) => {
 				console.error("Error with webookCallback!");
@@ -88,7 +88,9 @@ export default async function startServer() {
 			}
 			await fastify.oas();
 			if (process.env.NODE_ENV === "production") {
-				await bot.api.setWebhook(`${process.env.SERVER_URL}/${"test"}`);
+				await bot.api.setWebhook(
+					`${process.env.SERVER_URL}/${process.env.WEBHOOK_SECRET}`
+				);
 			}
 		}
 	);
