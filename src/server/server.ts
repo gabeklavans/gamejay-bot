@@ -57,7 +57,13 @@ if (process.env.NODE_ENV === "production") {
 		})
 		.after((err) => {
 			console.error("Error with webookCallback!");
-			console.error(err);
+			if (
+				!err.message.includes(
+					"Cannot read properties of undefined (reading 'update_id')"
+				)
+			) {
+				throw err;
+			}
 		});
 }
 
@@ -80,7 +86,7 @@ export default async function startServer() {
 			}
 			await fastify.oas();
 			if (process.env.NODE_ENV === "production") {
-				await bot.api.setWebhook(`${process.env.SERVER_URL}/${"what"}`);
+				await bot.api.setWebhook(`${process.env.SERVER_URL}/${"test"}`);
 			}
 		}
 	);
