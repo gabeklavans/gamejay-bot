@@ -54,13 +54,17 @@ if (process.env.NODE_ENV === "production") {
 	fastify.post(
 		`/${process.env.WEBHOOK_SECRET}`,
 		{
-			onError: (req, res, err, done) => {
+			onError: (req, res, err) => {
 				console.error("Error with webookCallback!");
 				if (
-					!err.message.includes(
+					err.message.includes(
 						"Cannot read properties of undefined (reading 'update_id')"
 					)
 				) {
+					fastify.log.warn(
+						"update_id was missing in webhook callback... consider if this is a problem"
+					);
+				} else {
 					throw err;
 				}
 			},
@@ -88,7 +92,9 @@ export default async function startServer() {
 			}
 			await fastify.oas();
 			if (process.env.NODE_ENV === "production") {
-				await bot.api.setWebhook(`${process.env.SERVER_URL}/${process.env.WEBHOOK_SECRET}`);
+				await bot.api.setWebhook(
+					`${process.env.SERVER_URL}/${process.env.WEBHOOK_SECRET}`
+				);
 			}
 		}
 	);
