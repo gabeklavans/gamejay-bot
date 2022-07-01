@@ -51,9 +51,14 @@ fastify.register(mainRoutes);
 fastify.register(whoRoutes, { prefix: "/who" });
 
 if (process.env.NODE_ENV === "production") {
-	fastify.register(webhookCallback(bot, "fastify"), {
-		prefix: `/${"test"}`,
-	});
+	fastify
+		.register(webhookCallback(bot, "fastify"), {
+			prefix: `/${"test"}`,
+		})
+		.after((err) => {
+			console.error("Error with webookCallback!");
+			console.error(err);
+		});
 }
 
 fastify.setErrorHandler((err, req, res) => {
@@ -70,14 +75,12 @@ export default async function startServer() {
 		process.env.SERVER_DOMAIN ?? "::",
 		async (err) => {
 			if (err) {
-				fastify.log.error(err);
+				fastify.log.fatal(err);
 				process.exit(1);
 			}
 			await fastify.oas();
 			if (process.env.NODE_ENV === "production") {
-				await bot.api.setWebhook(
-					`${process.env.SERVER_URL}/${"what"}`
-				);
+				await bot.api.setWebhook(`${process.env.SERVER_URL}/${"what"}`);
 			}
 		}
 	);
