@@ -63,8 +63,6 @@ if (process.env.NODE_ENV === "production") {
 				) {
 					throw err;
 				}
-
-				done();
 			},
 		},
 		webhookCallback(bot, "fastify")
