@@ -53,8 +53,8 @@ export default async function startServer() {
 	await who.init();
 
 	fastify.listen(
-		(process.env.PORT as string) ?? undefined,
-		(process.env.SERVER_DOMAIN as string) ?? undefined,
+		process.env.PORT ?? 3000,
+		process.env.SERVER_DOMAIN ?? "::",
 		async (err) => {
 			if (err) {
 				fastify.log.error(err);
