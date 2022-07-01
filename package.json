@@ -4,8 +4,8 @@
 	"description": "Telegram bot for playing games",
 	"main": "src/main.ts",
 	"engines": {
-		"node": ">18",
-		"npm": ">8"
+		"node": ">=16 <=18",
+		"npm": ">=8"
 	},
 	"scripts": {
 		"clean": "rimraf dist",
