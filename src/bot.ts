@@ -4,7 +4,8 @@ if (!process.env.BOT_API_KEY) {
 	console.error("environment misconfigured");
 }
 
-const bot = new Bot(process.env.BOT_API_KEY!);
+if (process.env.BOT_API_KEY == null) throw Error("BOT_TOKEN is missing.");
+export const bot = new Bot(process.env.BOT_API_KEY!);
 
 const keyboard = new InlineKeyboard().game("Join session!");
 
@@ -65,5 +66,7 @@ bot.on("inline_query", (ctx) => {
 });
 
 export default function startBot() {
-	bot.start();
+	if (process.env.NODE_ENV === "development") {
+		bot.start();
+	}
 }

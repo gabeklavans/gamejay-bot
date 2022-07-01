@@ -7,6 +7,7 @@ import mainRoutes from "./routes";
 import { Game } from "../constants";
 
 import who from "./word-hunt/main";
+import { bot } from "../bot";
 
 const fastify = Fastify({
 	logger: { level: "debug" },
@@ -54,12 +55,17 @@ export default async function startServer() {
 	fastify.listen(
 		3000,
 		(process.env.SERVER_DOMAIN as string) ?? undefined,
-		(err) => {
+		async (err) => {
 			if (err) {
 				fastify.log.error(err);
 				process.exit(1);
 			}
-			fastify.oas();
+			await fastify.oas();
+			if (process.env.NODE_ENV === "production") {
+				await bot.api.setWebhook(
+					`${process.env.SERVER_URL}/${process.env.BOT_API_KEY}`
+				);
+			}
 		}
 	);
 }
