@@ -8,6 +8,7 @@ import { Game } from "../constants";
 
 import who from "./word-hunt/main";
 import { bot } from "../bot";
+import { webhookCallback } from "grammy";
 
 const fastify = Fastify({
 	logger: { level: "debug" },
@@ -48,6 +49,12 @@ fastify.register(oas, {
 
 fastify.register(mainRoutes);
 fastify.register(whoRoutes, { prefix: "/who" });
+
+if (process.env.NODE_ENV === "production") {
+	fastify.register(webhookCallback(bot, "fastify"), {
+		prefix: `/${process.env.BOT_API_KEY}`,
+	});
+}
 
 export default async function startServer() {
 	await who.init();
