@@ -51,16 +51,24 @@ fastify.register(mainRoutes);
 fastify.register(whoRoutes, { prefix: "/who" });
 
 if (process.env.NODE_ENV === "production") {
-	fastify.post(`/test`, webhookCallback(bot, "fastify")).after((err) => {
-		console.error("Error with webookCallback!");
-		if (
-			!err.message.includes(
-				"Cannot read properties of undefined (reading 'update_id')"
-			)
-		) {
-			throw err;
-		}
-	});
+	fastify.post(
+		`/test`,
+		{
+			onError: (req, res, err, done) => {
+				console.error("Error with webookCallback!");
+				if (
+					!err.message.includes(
+						"Cannot read properties of undefined (reading 'update_id')"
+					)
+				) {
+					throw err;
+				}
+
+				done();
+			},
+		},
+		webhookCallback(bot, "fastify")
+	);
 }
 
 fastify.setErrorHandler((err, req, res) => {
