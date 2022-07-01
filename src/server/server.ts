@@ -51,13 +51,17 @@ fastify.register(whoRoutes, { prefix: "/who" });
 export default async function startServer() {
 	await who.init();
 
-	fastify.listen(3000, process.env.SERVER_DOMAIN as string, (err) => {
-		if (err) {
-			fastify.log.error(err);
-			process.exit(1);
+	fastify.listen(
+		3000,
+		(process.env.SERVER_DOMAIN as string) ?? undefined,
+		(err) => {
+			if (err) {
+				fastify.log.error(err);
+				process.exit(1);
+			}
+			fastify.oas();
 		}
-		fastify.oas();
-	});
+	);
 }
 
 export type GameSession = {
