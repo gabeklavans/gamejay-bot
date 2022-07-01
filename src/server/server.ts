@@ -76,7 +76,7 @@ export default async function startServer() {
 			await fastify.oas();
 			if (process.env.NODE_ENV === "production") {
 				await bot.api.setWebhook(
-					`${process.env.SERVER_URL}/${process.env.BOT_API_KEY}`
+					`${process.env.SERVER_URL}/${"what"}`
 				);
 			}
 		}
