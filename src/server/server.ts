@@ -52,7 +52,7 @@ fastify.register(whoRoutes, { prefix: "/who" });
 
 if (process.env.NODE_ENV === "production") {
 	fastify.register(webhookCallback(bot, "fastify"), {
-		prefix: `/${process.env.BOT_API_KEY}`,
+		prefix: `/${"test"}`,
 	});
 }
 
