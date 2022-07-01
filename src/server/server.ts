@@ -56,6 +56,12 @@ if (process.env.NODE_ENV === "production") {
 	});
 }
 
+fastify.setErrorHandler((err, req, res) => {
+	fastify.log.error(err);
+
+	res.status(500).send();
+});
+
 export default async function startServer() {
 	await who.init();
 
