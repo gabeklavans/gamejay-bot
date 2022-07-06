@@ -1,7 +1,7 @@
 import { FastifyInstance, FastifyReply } from "fastify";
 import { Api } from "grammy";
 import httpError from "http-errors";
-import { Game, TurnMax } from "../constants";
+import { Game, TURN_MAX } from "../constants";
 import { GameSession, gameSessions } from "./server";
 import {
 	endSession,
@@ -126,7 +126,7 @@ export default (
 					break;
 			}
 
-			if (gameSession.turnCount == TurnMax[gameSession.game]) {
+			if (gameSession.turnCount == TURN_MAX[gameSession.game]) {
 				endSession(sessionId);
 			}
 		}

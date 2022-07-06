@@ -1,4 +1,5 @@
 import { Api, Bot, GrammyError, InlineKeyboard } from "grammy";
+import { GAME_LIST } from "./constants";
 
 if (!process.env.BOT_API_KEY) {
 	console.error("environment misconfigured");
@@ -56,14 +57,27 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 });
 
 bot.on("inline_query", (ctx) => {
-	ctx.answerInlineQuery([
-		{
-			type: "game",
-			id: "1",
-			game_short_name: "who",
-		},
-	]).catch(console.error);
+	const query = ctx.inlineQuery.query;
+	ctx.answerInlineQuery(
+		searchGames(query).map((shortName, idx) => {
+			return {
+				type: "game",
+				id: idx.toString(),
+				game_short_name: shortName,
+			};
+		})
+	).catch(console.error);
 });
+
+function searchGames(query?: string) {
+	if (!query) {
+		return GAME_LIST.map((game) => game.shortName);
+	} else {
+		return GAME_LIST.filter((game) =>
+			game.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())
+		).map((game) => game.shortName);
+	}
+}
 
 export default function startBot() {
 	if (process.env.NODE_ENV === "development") {

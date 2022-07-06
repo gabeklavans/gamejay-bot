@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "crypto";
 import { FastifyReply } from "fastify";
 import { Api, GrammyError, RawApi } from "grammy";
 import { Server, IncomingMessage, ServerResponse } from "http";
-import { Game, PlayerMax, GameURL } from "../constants";
+import { Game, PLAYER_MAX, GAME_URL } from "../constants";
 import { GameSession, gameSessions } from "./server";
 
 import who from "./word-hunt/main";
@@ -75,7 +75,7 @@ export async function handleJoinSession(
 	// NOTE: this probably isn't a race condition? Node is single-threaded right?
 	if (
 		!session.scoredUsers[userId] &&
-		session.playerCount < PlayerMax[session.game]
+		session.playerCount < PLAYER_MAX[session.game]
 	) {
 		const session = gameSessions[sessionId];
 		session.playerCount++;
@@ -88,7 +88,7 @@ export async function handleJoinSession(
 			case Game.WORD_HUNT:
 				res.redirect(
 					`${
-						GameURL[Game.WORD_HUNT]
+						GAME_URL[Game.WORD_HUNT]
 					}?session=${sessionId}&user=${userId}`
 				);
 				break;
@@ -99,7 +99,7 @@ export async function handleJoinSession(
 			case Game.WORD_HUNT:
 				res.redirect(
 					`${
-						GameURL[Game.WORD_HUNT]
+						GAME_URL[Game.WORD_HUNT]
 					}?session=${sessionId}&user=${userId}&spectate=true`
 				);
 				break;
