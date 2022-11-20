@@ -1,6 +1,7 @@
 import { FastifyInstance, FastifyReply } from "fastify";
 import { Api } from "grammy";
 import httpError from "http-errors";
+import { sendMsg } from "../bot";
 import { Game, TURN_MAX } from "../constants";
 import { GameSession, gameSessions } from "./server";
 import {
@@ -190,6 +191,20 @@ async function calcAndSetHighScores(gameSession: GameSession, userId: string) {
 			} else {
 				console.error(
 					"Old winner has never won, which should be impossible..."
+				);
+			}
+
+			// notify everyone of the new winner in town
+			// NOTE: this does not work for games made by inline queries,
+			// as they don't have chat_id nor send access
+			if (gameSession.chatId) {
+				const replyMsgId = gameSession.messageId
+					? parseInt(gameSession.messageId)
+					: undefined;
+				sendMsg(
+					`${winner.name} took the lead with ${winner.score}!`,
+					gameSession.chatId,
+					replyMsgId
 				);
 			}
 		}

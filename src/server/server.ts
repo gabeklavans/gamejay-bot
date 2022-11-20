@@ -95,6 +95,7 @@ export default async function startServer() {
 				await bot.api.setWebhook(
 					`${process.env.SERVER_URL}/${process.env.WEBHOOK_SECRET}`
 				);
+				console.log("Bot webhook set");
 			}
 		}
 	);

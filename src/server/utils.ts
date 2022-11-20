@@ -140,7 +140,7 @@ export async function startSession(
 
 export function endSession(sessionId: string) {
 	const gameSession = gameSessions[sessionId];
-	// TODO: report the winner to telegram
+	// TODO: maybe report the winner to telegram
 	// TODO: Save session to database so we don't have to keep it in memory...
 	gameSession.done = true;
 	console.log(`Game ${sessionId} over. Saving to database...`);

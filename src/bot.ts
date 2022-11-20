@@ -69,6 +69,14 @@ bot.on("inline_query", (ctx) => {
 	).catch(console.error);
 });
 
+export function sendMsg(
+	msg: string,
+	chatId: string,
+	replyMsgId?: number
+): void {
+	bot.api.sendMessage(chatId, msg, { reply_to_message_id: replyMsgId });
+}
+
 function searchGames(query?: string) {
 	if (!query) {
 		return GAME_LIST.map((game) => game.shortName);
@@ -82,5 +90,6 @@ function searchGames(query?: string) {
 export default function startBot() {
 	if (process.env.NODE_ENV === "development") {
 		bot.start();
+		console.log("Bot started polling-mode");
 	}
 }
