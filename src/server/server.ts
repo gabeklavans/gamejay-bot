@@ -55,7 +55,7 @@ if (process.env.NODE_ENV === "production") {
 		`/${process.env.WEBHOOK_SECRET}`,
 		{
 			onError: (req, res, err) => {
-				console.error("Error with webookCallback!");
+				console.error("Error with webhookCallback!");
 				if (
 					err.message.includes(
 						"Cannot read properties of undefined (reading 'update_id')"
