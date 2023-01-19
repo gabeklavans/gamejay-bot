@@ -84,7 +84,7 @@ export default async function startServer() {
 
 	fastify.listen(
 		process.env.PORT ?? 3000,
-		process.env.SERVER_DOMAIN ?? "::",
+		process.env.SERVER_DOMAIN ?? "127.0.0.1",
 		async (err) => {
 			if (err) {
 				fastify.log.fatal(err);
