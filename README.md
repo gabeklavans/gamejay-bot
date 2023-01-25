@@ -38,6 +38,10 @@ Each game is intended to be a completely separately hosted website. This backend
  - There is also an `ecosystem.config.js` for deploying using [pm2](https://pm2.keymetrics.io/), but I don't really use that now that I use Caprover.
 
 ## Start Development Server
+ - Install dependencies with:
+```sh
+npm install
+``` 
  - Tell `nodemon` to spin up a local server in watch mode that can run the typescript source code directly
 ```sh
 npm run dev
