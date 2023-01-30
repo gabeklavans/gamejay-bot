@@ -15,9 +15,9 @@ The code for the Telegram bot is in `src/bot.ts`. This is all dedicated to proce
 
 If in development, it also starts the bot's polling for commands/responses, as opposed to using the [more efficient webhook system](https://grammy.dev/guide/deployment-types.html).
 
-### gamejay Server
+### GameJay Server
 
-The code for the gamejay server is under `src/server`. This is where most of the work is done. `server.ts` starts the server, sets up all the API routing chunks for every game (imported from other files for organizational purposes), and does some other custodial stuff like setting up the API docs page. If in production, it also imports the Telegram bot and sets the webhook to point to the server so the bot can run in webhook mode.
+The code for the GameJay server is under `src/server`. This is where most of the work is done. `server.ts` starts the server, sets up all the API routing chunks for every game (imported from other files for organizational purposes), and does some other custodial stuff like setting up the API docs page. If in production, it also imports the Telegram bot and sets the webhook to point to the server so the bot can run in webhook mode.
 
 `src/server/routes.ts` contains routes that are common to all games; things like turn-logic and scoring
 
