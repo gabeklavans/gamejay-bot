@@ -1,6 +1,6 @@
-# Gamejay Bot
+# GameJay Bot
 
-A combination Telegram Bot plus Server for Gamejay web-based games.
+A combination Telegram Bot plus Server for GameJay web-based games.
 
 The games are designed for drop-in functionality and minimal friction to learn and play. Largely inspired by the games featured in GamePigeon, an iOS Messages games app.
 
