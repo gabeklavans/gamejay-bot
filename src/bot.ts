@@ -5,7 +5,7 @@ if (!process.env.BOT_API_KEY) {
 	console.error("environment misconfigured");
 }
 
-if (process.env.BOT_API_KEY == null) throw Error("BOT_TOKEN is missing.");
+if (process.env.BOT_API_KEY == null) throw Error("Telegram bot API token is missing.");
 export const bot = new Bot(process.env.BOT_API_KEY!);
 
 const keyboard = new InlineKeyboard().game("Join session!");
