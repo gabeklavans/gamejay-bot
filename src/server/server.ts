@@ -96,7 +96,10 @@ export default async function startServer() {
 	await who.init();
 
 	fastify.listen(
-		{ port: parseInt(process.env.PORT ?? "3000") },
+		{
+			host: process.env.SERVER_DOMAIN ?? "::",
+			port: parseInt(process.env.PORT ?? "3000"),
+		},
 		async (err) => {
 			if (err) {
 				fastify.log.fatal(err);
