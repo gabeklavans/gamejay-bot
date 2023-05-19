@@ -100,13 +100,13 @@ export default (
 				);
 				return;
 			}
-			if (!gameSession.scoredUsers[userId]) {
+			if (!gameSession.players[userId]) {
 				fastify.log.error(`User ${userId} did not join this game.`);
 				return;
 			}
-			if (gameSession.scoredUsers[userId].score) {
+			if (gameSession.players[userId].score) {
 				fastify.log.error(
-					`User ${userId} already submitted a score of ${gameSession.scoredUsers[userId]}.`
+					`User ${userId} already submitted a score of ${gameSession.players[userId]}.`
 				);
 				return;
 			}
@@ -116,14 +116,14 @@ export default (
 			}
 
 			gameSession.turnCount++;
-			gameSession.scoredUsers[userId].score = score;
+			gameSession.players[userId].score = score;
 
 			calcAndSetHighScores(gameSession, userId).catch(console.error);
 
 			// set game-specific values here
 			switch (gameSession.game) {
 				case Game.WORD_HUNT:
-					gameSession.scoredUsers[userId].words = body.words;
+					gameSession.players[userId].words = body.words;
 					break;
 			}
 
@@ -139,7 +139,7 @@ export default (
 async function calcAndSetHighScores(gameSession: GameSession, userId: string) {
 	const api = new Api(process.env.BOT_API_KEY!);
 
-	const scoreEntries: ScoreEntry[] = Object.entries(gameSession.scoredUsers)
+	const scoreEntries: ScoreEntry[] = Object.entries(gameSession.players)
 		.map((scoredUser) => {
 			return {
 				id: scoredUser[0],

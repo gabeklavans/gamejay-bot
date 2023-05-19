@@ -119,10 +119,14 @@ export type GameSession = {
 	inlineId?: string;
 	game: Game;
 	board?: Board;
-	playerCount: number;
 	turnCount: number;
-	scoredUsers: {
-		[key: string]: { score?: number; words?: string[]; name: string };
+	players: {
+		[key: string]: {
+			score?: number;
+			words?: string[];
+			name: string;
+			started: boolean;
+		};
 	};
 	done: boolean;
 };

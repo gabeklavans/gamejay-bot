@@ -74,14 +74,14 @@ export async function handleJoinSession(
 	const session = gameSessions[sessionId];
 	// NOTE: this probably isn't a race condition? Node is single-threaded right?
 	if (
-		!session.scoredUsers[userId] &&
-		session.playerCount < PLAYER_MAX[session.game]
+		!session.players[userId] &&
+		Object.keys(session.players).length < PLAYER_MAX[session.game]
 	) {
 		const session = gameSessions[sessionId];
-		session.playerCount++;
-		session.scoredUsers[userId] = {
+		session.players[userId] = {
 			words: [],
 			name: userName,
+			started: false,
 		};
 
 		switch (gameSessions[sessionId].game) {
@@ -125,9 +125,8 @@ export async function startSession(
 		messageId: chatInfo.messageId,
 		inlineId: chatInfo.inlineId,
 		game,
-		playerCount: 0,
 		turnCount: 0,
-		scoredUsers: {},
+		players: {},
 		done: false,
 	};
 	switch (game) {

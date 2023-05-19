@@ -35,7 +35,7 @@ export default (
 
 		const sessionView = {
 			board: session.board,
-			scoredUsers: session.scoredUsers,
+			scoredUsers: session.players,
 			done: session.done,
 		};
 
