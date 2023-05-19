@@ -72,6 +72,7 @@ export async function handleJoinSession(
 	}
 
 	const session = gameSessions[sessionId];
+	// add player to session if possible
 	// NOTE: this probably isn't a race condition? Node is single-threaded right?
 	if (
 		!session.players[userId] &&
@@ -83,7 +84,10 @@ export async function handleJoinSession(
 			name: userName,
 			started: false,
 		};
+	}
 
+	// determine where to redirect the browser
+	if (session.players[userId] && !session.players[userId].started) {
 		switch (gameSessions[sessionId].game) {
 			case Game.WORD_HUNT:
 				res.redirect(
@@ -94,7 +98,6 @@ export async function handleJoinSession(
 				break;
 		}
 	} else {
-		// game is full, go into spectator mode
 		switch (gameSessions[sessionId].game) {
 			case Game.WORD_HUNT:
 				res.redirect(
@@ -105,7 +108,26 @@ export async function handleJoinSession(
 				break;
 		}
 		// TODO: implement spectator mode
+		// Gabe, later: I'm not sure what I meant by this...
 	}
+}
+
+/**
+ * Let's the session know that a player started. This usually means that
+ * if the player leaves and comes back, they forfeit their turn.
+ * @param sessionId
+ * @param userId
+ */
+export function handlePlayerStart(sessionId: string, userId: string) {
+	if (!gameSessions[sessionId]) {
+		console.error("handlePlayerStart: Session not found");
+	}
+
+	if (!gameSessions[sessionId].players[userId]) {
+		console.error("handlePlayerStart: User not found in session");
+	}
+
+	gameSessions[sessionId].players[userId].started = true;
 }
 
 /**

@@ -8,6 +8,7 @@ import {
 	endSession,
 	getGameScore,
 	handleJoinSession,
+	handlePlayerStart,
 	hashTgCallback,
 	setGameScore,
 	sortDescendingScore,
@@ -57,6 +58,17 @@ export default (
 		const chatInfo = { chatId, messageId };
 
 		await handleJoinSession(sessionId, chatInfo, userId, userName, res);
+	});
+
+	fastify.patch<{
+		Params: {
+			sessionId: string;
+			userId: string;
+		};
+	}>("/start-game/:sessionId/:userId", async (req, res) => {
+		const { sessionId, userId } = req.params;
+		
+		handlePlayerStart(sessionId, userId);
 	});
 
 	fastify.post<{
