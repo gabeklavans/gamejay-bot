@@ -11,7 +11,7 @@ import who from "./word-hunt/main";
 import { bot } from "../bot";
 import { webhookCallback } from "grammy";
 
-const fastify = Fastify({
+export const fastify = Fastify({
 	logger: { level: "debug" },
 });
 const validDomains = (process.env.CORS_ACCESS as string).split(",");
@@ -131,6 +131,7 @@ export type GameSession = {
 			started: boolean;
 		};
 	};
+	winnerIds: string[]; // state used for score-keeping
 	done: boolean;
 };
 

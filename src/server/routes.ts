@@ -3,15 +3,14 @@ import { Api } from "grammy";
 import httpError from "http-errors";
 import { sendMsg } from "../bot";
 import { Game, TURN_MAX } from "../constants";
-import { GameSession, gameSessions } from "./server";
+import { GameSession, fastify, gameSessions } from "./server";
 import {
+	decrementGameScore,
 	endSession,
-	getGameScore,
 	handleJoinSession,
 	handlePlayerStart,
 	hashTgCallback,
-	setGameScore,
-	sortDescendingScore,
+	incrementGameScore,
 } from "./utils";
 
 export default (
@@ -67,7 +66,7 @@ export default (
 		};
 	}>("/start-game/:sessionId/:userId", async (req, res) => {
 		const { sessionId, userId } = req.params;
-		
+
 		handlePlayerStart(sessionId, userId);
 	});
 
@@ -128,9 +127,10 @@ export default (
 			}
 
 			gameSession.turnCount++;
-			gameSession.players[userId].score = score;
 
-			calcAndSetHighScores(gameSession, userId).catch(console.error);
+			handleNewScore(gameSession, userId, score).catch(console.error);
+
+			gameSession.players[userId].score = score;
 
 			// set game-specific values here
 			switch (gameSession.game) {
@@ -148,89 +148,57 @@ export default (
 	done();
 };
 
-async function calcAndSetHighScores(gameSession: GameSession, userId: string) {
-	const api = new Api(process.env.BOT_API_KEY!);
+async function handleNewScore(
+	gameSession: GameSession,
+	scoringPlayerId: string,
+	newScore: number
+) {
+	const botApi = new Api(process.env.BOT_API_KEY!);
 
-	const scoreEntries: ScoreEntry[] = Object.entries(gameSession.players)
-		.map((scoredUser) => {
+	const oldScoredPlayers = Object.entries(gameSession.players)
+		.filter((scoredPlayer) => scoredPlayer[1].score != undefined)
+		.map((scoredPlayer) => {
 			return {
-				id: scoredUser[0],
-				...scoredUser[1],
+				id: scoredPlayer[0],
+				score: scoredPlayer[1].score as number,
 			};
-		})
-		// only figure out a winner if there are at least two confirmed scores
-		.filter((scoreEntry) => scoreEntry.score != undefined);
+		});
 
-	// winner is on top
-	scoreEntries.sort(sortDescendingScore);
-	const winner = scoreEntries[0];
-	console.log(scoreEntries);
+	if (oldScoredPlayers.length < 1) {
+		fastify.log.debug("Not enough scored players to determine winner");
+		return;
+	}
 
-	// scores may now require rebalancing
-	if (scoreEntries.length > 2) {
-		console.log("More than 2 scores==========");
+	// handle this edge-case up front to make the rest of the logic work
+	if (oldScoredPlayers.length == 1 && oldScoredPlayers[0].score >= newScore) {
+		fastify.log.debug(`First scoring player ${oldScoredPlayers[0].id} won`);
 
-		if (winner.id == userId) {
-			// there's a new winner in town, rebalance scores
-			const oldWinner = scoreEntries[1];
-			const oldWinnerGameScore = await getGameScore(
-				gameSession,
-				api,
-				oldWinner.id
-			);
+		gameSession.winnerIds = [oldScoredPlayers[0].id];
+		await incrementGameScore(gameSession, botApi, oldScoredPlayers[0].id);
+	}
 
-			if (oldWinnerGameScore) {
-				// there was an old winner, so take away from them and give to new winner
-				const newWinnerGameScore = await getGameScore(
-					gameSession,
-					api,
-					winner.id
-				);
+	const oldHighScore = Math.max(
+		...oldScoredPlayers.map((scoredPlayer) => scoredPlayer.score as number)
+	);
 
-				setGameScore(
-					gameSession,
-					api,
-					oldWinner.id,
-					oldWinnerGameScore.score - 1,
-					true
-				);
-				setGameScore(
-					gameSession,
-					api,
-					winner.id,
-					newWinnerGameScore ? newWinnerGameScore.score + 1 : 1
-				);
-			} else {
-				console.error(
-					"Old winner has never won, which should be impossible..."
-				);
-			}
-
-			// notify everyone of the new winner in town
-			// NOTE: this does not work for games made by inline queries,
-			// as they don't have chat_id nor send access
-			if (gameSession.chatId) {
-				const replyMsgId = gameSession.messageId
-					? parseInt(gameSession.messageId)
-					: undefined;
-				sendMsg(
-					`${winner.name} took the lead with ${winner.score}!`,
-					gameSession.chatId,
-					replyMsgId
-				);
-			}
-		}
-	} else if (scoreEntries.length > 1) {
-		console.log("2 scores==========");
-		// only two scores, just get the winner
-		const winnerGameScore = await getGameScore(gameSession, api, winner.id);
-
-		await setGameScore(
-			gameSession,
-			api,
-			winner.id,
-			winnerGameScore ? winnerGameScore.score + 1 : 1,
-			true
+	if (newScore == oldHighScore) {
+		fastify.log.debug(
+			`Player ${scoringPlayerId} tied with [${gameSession.winnerIds}]`
 		);
+
+		gameSession.winnerIds.push(scoringPlayerId);
+		await incrementGameScore(gameSession, botApi, scoringPlayerId);
+	} else if (newScore > oldHighScore) {
+		fastify.log.debug(
+			`Player ${scoringPlayerId} beat old score of ${oldHighScore} with ${newScore}`
+		);
+
+		for (const oldWinnerId of gameSession.winnerIds) {
+			await decrementGameScore(gameSession, botApi, oldWinnerId);
+		}
+
+		gameSession.winnerIds = [scoringPlayerId];
+
+		await incrementGameScore(gameSession, botApi, scoringPlayerId);
 	}
 }

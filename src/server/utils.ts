@@ -3,7 +3,7 @@ import { FastifyReply } from "fastify";
 import { Api, GrammyError, RawApi } from "grammy";
 import { Server, IncomingMessage, ServerResponse } from "http";
 import { Game, PLAYER_MAX, GAME_URL } from "../constants";
-import { GameSession, gameSessions } from "./server";
+import { GameSession, fastify, gameSessions } from "./server";
 
 import who from "./word-hunt/main";
 
@@ -14,6 +14,8 @@ export function setGameScore(
 	score: number,
 	force: boolean = false
 ) {
+	fastify.log.info(`Changing score of player ${userId} to ${score}, force=${force}`);
+
 	if (gameSession.inlineId) {
 		api.setGameScoreInline(gameSession.inlineId, parseInt(userId), score, {
 			force,
@@ -29,7 +31,7 @@ export function setGameScore(
 	}
 }
 
-export async function getGameScore(
+export async function getGameScoreObj(
 	gameSession: GameSession,
 	api: Api<RawApi>,
 	userId: string
@@ -49,14 +51,58 @@ export async function getGameScore(
 			);
 		}
 	} catch (err) {
-		console.error(err);
+		fastify.log.error(err);
 	}
 
-	console.log(gameScores);
-
 	return gameScores?.find(
-		(gameScore) => gameScore.user.id.toString() === userId
+		(gameScore) => gameScore.user.id === parseInt(userId)
 	);
+}
+
+/**
+ * Handles incrementing a player's score. If the player has never
+ * scored before, will set to 1.
+ * @param gameSession
+ * @param api Grammy bot API object
+ * @param playerId
+ */
+export async function incrementGameScore(
+	gameSession: GameSession,
+	api: Api<RawApi>,
+	playerId: string
+) {
+	const oldScoreObj = await getGameScoreObj(gameSession, api, playerId);
+
+	fastify.log.debug(`incrementGameScore: oldScoreObj=${oldScoreObj}`);
+
+	setGameScore(
+		gameSession,
+		api,
+		playerId,
+		oldScoreObj ? oldScoreObj.score + 1 : 1
+	);
+}
+
+/**
+ * Handles decrementing a player's score. Will return early with a warning
+ * if the player's score is not found.
+ * @param gameSession
+ * @param api Grammy bot API object
+ * @param playerId
+ */
+export async function decrementGameScore(
+	gameSession: GameSession,
+	api: Api<RawApi>,
+	playerId: string
+) {
+	const oldScoreObj = await getGameScoreObj(gameSession, api, playerId);
+
+	if (!oldScoreObj) {
+		fastify.log.warn(`Player ${playerId} does not have a score`);
+		return;
+	}
+
+	setGameScore(gameSession, api, playerId, oldScoreObj.score - 1);
 }
 
 export async function handleJoinSession(
@@ -149,6 +195,7 @@ export async function startSession(
 		game,
 		turnCount: 0,
 		players: {},
+		winnerIds: [],
 		done: false,
 	};
 	switch (game) {
@@ -177,9 +224,9 @@ export function hashTgCallback(chatId: string, messageId: string) {
 
 function handleScoreUpdateErr(err: GrammyError) {
 	if (err.description.includes("BOT_SCORE_NOT_MODIFIED")) {
-		console.warn("Score not modified");
+		fastify.log.warn("Score not modified");
 	} else {
-		console.error(err);
+		fastify.log.error(err);
 	}
 }
 
