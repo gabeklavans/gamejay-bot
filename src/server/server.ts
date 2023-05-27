@@ -12,7 +12,7 @@ import { bot } from "../bot";
 import { webhookCallback } from "grammy";
 
 export const fastify = Fastify({
-	logger: { level: "debug" },
+	logger: { level: process.env.LOG_LEVEL ?? "debug" },
 });
 const validDomains = (process.env.CORS_ACCESS as string).split(",");
 fastify.register(fastifyCors, {
