@@ -20,3 +20,5 @@ export const PLAYER_MAX: { [key in Game]: number } = {
 export const TURN_MAX: { [key in Game]: number } = {
 	[Game.WORD_HUNT]: Number.MAX_VALUE,
 };
+
+export const GAME_START_BUTTON_TEXT = "Play now!"
