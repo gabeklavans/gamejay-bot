@@ -1,5 +1,5 @@
-import { Api, Bot, GrammyError, InlineKeyboard } from "grammy";
-import { GAME_LIST } from "./constants";
+import { Bot, GrammyError, InlineKeyboard } from "grammy";
+import { GAME_LIST, GAME_START_BUTTON_TEXT } from "./constants";
 
 if (!process.env.BOT_API_KEY) {
 	console.error("environment misconfigured");
@@ -8,13 +8,13 @@ if (!process.env.BOT_API_KEY) {
 if (process.env.BOT_API_KEY == null) throw Error("Telegram bot API token is missing.");
 export const bot = new Bot(process.env.BOT_API_KEY!);
 
-const keyboard = new InlineKeyboard().game("Join session!");
+const startingInlineKeyboard = new InlineKeyboard().game(GAME_START_BUTTON_TEXT);
 
 bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));
 
 bot.command("game", async (ctx) => {
 	await ctx.replyWithGame(process.env.WORD_HUNT_SHORTNAME as string, {
-		reply_markup: keyboard,
+		reply_markup: startingInlineKeyboard,
 	});
 });
 
@@ -64,6 +64,7 @@ bot.on("inline_query", (ctx) => {
 				type: "game",
 				id: idx.toString(),
 				game_short_name: shortName,
+				reply_markup: startingInlineKeyboard
 			};
 		})
 	).catch(console.error);

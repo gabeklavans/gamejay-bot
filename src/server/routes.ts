@@ -1,8 +1,8 @@
 import { FastifyInstance, FastifyReply } from "fastify";
-import { Api } from "grammy";
+import { Api, InlineKeyboard } from "grammy";
 import httpError from "http-errors";
-import { sendMsg } from "../bot";
-import { Game, TURN_MAX } from "../constants";
+import { bot } from "../bot";
+import { GAME_START_BUTTON_TEXT, Game, TURN_MAX } from "../constants";
 import { GameSession, fastify, gameSessions } from "./server";
 import {
 	decrementGameScore,
@@ -122,6 +122,8 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 
 			gameSession.players[userId].score = score;
 
+			updateInlineKeyboard(gameSession);
+
 			// set game-specific values here
 			switch (gameSession.game) {
 				case Game.WORD_HUNT:
@@ -137,6 +139,24 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 
 	done();
 };
+
+function updateInlineKeyboard(gameSession: GameSession) {
+	const inlineKeyboard = new InlineKeyboard().game(GAME_START_BUTTON_TEXT).row();
+	Object.values(gameSession.players).forEach((player, idx) => {
+		inlineKeyboard.text(`${player.name}: ${player.score ?? "DNF"}`);
+		if (idx % 2 == 1) inlineKeyboard.row();
+	});
+
+	if (gameSession.inlineId) {
+		bot.api.editMessageReplyMarkupInline(gameSession.inlineId, { reply_markup: inlineKeyboard });
+	} else if (gameSession.chatId && gameSession.messageId) {
+		bot.api.editMessageReplyMarkup(gameSession.chatId, parseInt(gameSession.messageId), {
+			reply_markup: inlineKeyboard,
+		});
+	} else {
+		fastify.log.error(`updateInlineKeyboard: game session doesn't have an associated message`);
+	}
+}
 
 async function handleNewScore(gameSession: GameSession, scoringPlayerId: string, newScore: number) {
 	const botApi = new Api(process.env.BOT_API_KEY!);
