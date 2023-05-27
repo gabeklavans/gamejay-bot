@@ -14,37 +14,24 @@ export function setGameScore(
 	score: number,
 	force: boolean = false
 ) {
-	fastify.log.info(
-		`Changing score of player ${userId} to ${score}, force=${force}`
-	);
+	fastify.log.info(`Changing score of player ${userId} to ${score}, force=${force}`);
 
 	if (gameSession.inlineId) {
 		api.setGameScoreInline(gameSession.inlineId, parseInt(userId), score, {
 			force,
 		}).catch(handleScoreUpdateErr);
 	} else if (gameSession.chatId && gameSession.messageId) {
-		api.setGameScore(
-			parseInt(gameSession.chatId),
-			parseInt(gameSession.messageId),
-			parseInt(userId),
-			score,
-			{ force }
-		).catch(handleScoreUpdateErr);
+		api.setGameScore(parseInt(gameSession.chatId), parseInt(gameSession.messageId), parseInt(userId), score, {
+			force,
+		}).catch(handleScoreUpdateErr);
 	}
 }
 
-export async function getGameScoreObj(
-	gameSession: GameSession,
-	api: Api<RawApi>,
-	userId: string
-) {
+export async function getGameScoreObj(gameSession: GameSession, api: Api<RawApi>, userId: string) {
 	let gameScores;
 	try {
 		if (gameSession.inlineId) {
-			gameScores = await api.getGameHighScoresInline(
-				gameSession.inlineId,
-				parseInt(userId)
-			);
+			gameScores = await api.getGameHighScoresInline(gameSession.inlineId, parseInt(userId));
 		} else if (gameSession.chatId && gameSession.messageId) {
 			gameScores = await api.getGameHighScores(
 				parseInt(gameSession.chatId),
@@ -56,9 +43,7 @@ export async function getGameScoreObj(
 		fastify.log.error(err);
 	}
 
-	const foundScore = gameScores?.find(
-		(gameScore) => gameScore.user.id === parseInt(userId)
-	);
+	const foundScore = gameScores?.find((gameScore) => gameScore.user.id === parseInt(userId));
 
 	fastify.log.debug(`Found score: ${foundScore}`);
 
@@ -72,19 +57,10 @@ export async function getGameScoreObj(
  * @param api Grammy bot API object
  * @param playerId
  */
-export async function incrementGameScore(
-	gameSession: GameSession,
-	api: Api<RawApi>,
-	playerId: string
-) {
+export async function incrementGameScore(gameSession: GameSession, api: Api<RawApi>, playerId: string) {
 	const oldScoreObj = await getGameScoreObj(gameSession, api, playerId);
 
-	setGameScore(
-		gameSession,
-		api,
-		playerId,
-		oldScoreObj ? oldScoreObj.score + 1 : 1
-	);
+	setGameScore(gameSession, api, playerId, oldScoreObj ? oldScoreObj.score + 1 : 1);
 }
 
 /**
@@ -94,11 +70,7 @@ export async function incrementGameScore(
  * @param api Grammy bot API object
  * @param playerId
  */
-export async function decrementGameScore(
-	gameSession: GameSession,
-	api: Api<RawApi>,
-	playerId: string
-) {
+export async function decrementGameScore(gameSession: GameSession, api: Api<RawApi>, playerId: string) {
 	const oldScoreObj = await getGameScoreObj(gameSession, api, playerId);
 
 	if (!oldScoreObj) {
@@ -124,10 +96,7 @@ export async function handleJoinSession(
 	const session = gameSessions[sessionId];
 	// add player to session if possible
 	// NOTE: this probably isn't a race condition? Node is single-threaded right?
-	if (
-		!session.players[userId] &&
-		Object.keys(session.players).length < PLAYER_MAX[session.game]
-	) {
+	if (!session.players[userId] && Object.keys(session.players).length < PLAYER_MAX[session.game]) {
 		const session = gameSessions[sessionId];
 		session.players[userId] = {
 			words: [],
@@ -140,21 +109,13 @@ export async function handleJoinSession(
 	if (session.players[userId] && !session.players[userId].started) {
 		switch (gameSessions[sessionId].game) {
 			case Game.WORD_HUNT:
-				res.redirect(
-					`${
-						GAME_URL[Game.WORD_HUNT]
-					}?session=${sessionId}&user=${userId}`
-				);
+				res.redirect(`${GAME_URL[Game.WORD_HUNT]}?session=${sessionId}&user=${userId}`);
 				break;
 		}
 	} else {
 		switch (gameSessions[sessionId].game) {
 			case Game.WORD_HUNT:
-				res.redirect(
-					`${
-						GAME_URL[Game.WORD_HUNT]
-					}?session=${sessionId}&user=${userId}&spectate=true`
-				);
+				res.redirect(`${GAME_URL[Game.WORD_HUNT]}?session=${sessionId}&user=${userId}&spectate=true`);
 				break;
 		}
 		// TODO: implement spectator mode
@@ -186,11 +147,7 @@ export function handlePlayerStart(sessionId: string, userId: string) {
  * @param uid The ID to be used for the session
  * @returns The ID used for the session
  */
-export async function startSession(
-	game: Game,
-	chatInfo: ChatInfo,
-	uid?: string
-) {
+export async function startSession(game: Game, chatInfo: ChatInfo, uid?: string) {
 	const gameId = uid ? uid : randomUUID();
 	gameSessions[gameId] = {
 		chatId: chatInfo.chatId,
@@ -235,8 +192,5 @@ function handleScoreUpdateErr(err: GrammyError) {
 }
 
 export function sortDescendingScore(a: ScoreEntry, b: ScoreEntry) {
-	return (
-		(b.score ?? Number.MIN_SAFE_INTEGER) -
-		(a.score ?? Number.MIN_SAFE_INTEGER)
-	);
+	return (b.score ?? Number.MIN_SAFE_INTEGER) - (a.score ?? Number.MIN_SAFE_INTEGER);
 }

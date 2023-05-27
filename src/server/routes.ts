@@ -13,11 +13,7 @@ import {
 	incrementGameScore,
 } from "./utils";
 
-export default (
-	fastify: FastifyInstance,
-	opts: any,
-	done: (err?: Error | undefined) => void
-) => {
+export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefined) => void) => {
 	fastify.get<{
 		Params: {
 			inlineId: string;
@@ -96,9 +92,7 @@ export default (
 			const { sessionId, userId } = req.params;
 
 			if (!sessionId || !userId) {
-				fastify.log.error(
-					`Invalid URL params, sessionId: ${sessionId}, userId: ${userId}.`
-				);
+				fastify.log.error(`Invalid URL params, sessionId: ${sessionId}, userId: ${userId}.`);
 				return;
 			}
 			const gameSession = gameSessions[sessionId];
@@ -106,9 +100,7 @@ export default (
 			const score: number = body.score;
 
 			if (!gameSession) {
-				fastify.log.error(
-					`Session with ID ${sessionId} does not exist.`
-				);
+				fastify.log.error(`Session with ID ${sessionId} does not exist.`);
 				return;
 			}
 			if (!gameSession.players[userId]) {
@@ -116,9 +108,7 @@ export default (
 				return;
 			}
 			if (gameSession.players[userId].score) {
-				fastify.log.error(
-					`User ${userId} already submitted a score of ${gameSession.players[userId]}.`
-				);
+				fastify.log.error(`User ${userId} already submitted a score of ${gameSession.players[userId]}.`);
 				return;
 			}
 			if (score < 0) {
@@ -148,11 +138,7 @@ export default (
 	done();
 };
 
-async function handleNewScore(
-	gameSession: GameSession,
-	scoringPlayerId: string,
-	newScore: number
-) {
+async function handleNewScore(gameSession: GameSession, scoringPlayerId: string, newScore: number) {
 	const botApi = new Api(process.env.BOT_API_KEY!);
 
 	const oldScoredPlayers = Object.entries(gameSession.players)
@@ -177,21 +163,15 @@ async function handleNewScore(
 		await incrementGameScore(gameSession, botApi, oldScoredPlayers[0].id);
 	}
 
-	const oldHighScore = Math.max(
-		...oldScoredPlayers.map((scoredPlayer) => scoredPlayer.score as number)
-	);
+	const oldHighScore = Math.max(...oldScoredPlayers.map((scoredPlayer) => scoredPlayer.score as number));
 
 	if (newScore == oldHighScore) {
-		fastify.log.info(
-			`Player ${scoringPlayerId} tied with [${gameSession.winnerIds}]`
-		);
+		fastify.log.info(`Player ${scoringPlayerId} tied with [${gameSession.winnerIds}]`);
 
 		gameSession.winnerIds.push(scoringPlayerId);
 		await incrementGameScore(gameSession, botApi, scoringPlayerId);
 	} else if (newScore > oldHighScore) {
-		fastify.log.info(
-			`Player ${scoringPlayerId} beat old score of ${oldHighScore} with ${newScore}`
-		);
+		fastify.log.info(`Player ${scoringPlayerId} beat old score of ${oldHighScore} with ${newScore}`);
 
 		for (const oldWinnerId of gameSession.winnerIds) {
 			await decrementGameScore(gameSession, botApi, oldWinnerId);

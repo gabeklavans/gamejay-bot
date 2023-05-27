@@ -69,11 +69,7 @@ bot.on("inline_query", (ctx) => {
 	).catch(console.error);
 });
 
-export function sendMsg(
-	msg: string,
-	chatId: string,
-	replyMsgId?: number
-): void {
+export function sendMsg(msg: string, chatId: string, replyMsgId?: number): void {
 	bot.api.sendMessage(chatId, msg, { reply_to_message_id: replyMsgId });
 }
 
@@ -81,9 +77,9 @@ function searchGames(query?: string) {
 	if (!query) {
 		return GAME_LIST.map((game) => game.shortName);
 	} else {
-		return GAME_LIST.filter((game) =>
-			game.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())
-		).map((game) => game.shortName);
+		return GAME_LIST.filter((game) => game.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map(
+			(game) => game.shortName
+		);
 	}
 }
 

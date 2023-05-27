@@ -45,16 +45,10 @@ function genBoard() {
 		if (DEBUG) {
 			console.log(`generating new board ${board.length + 1}...`);
 		}
-		board = pfBoggle
-			.generate(GRID_SIZE)
-			.map((letter) => letter.slice(0, 1)); // I guess boggle considers QU a letter...
+		board = pfBoggle.generate(GRID_SIZE).map((letter) => letter.slice(0, 1)); // I guess boggle considers QU a letter...
 		const solutions = pfBoggle.solve(board);
 
-		boardWords = new Set(
-			solutions
-				.map((solution) => solution.word)
-				.filter((word) => word.length > 2)
-		);
+		boardWords = new Set(solutions.map((solution) => solution.word).filter((word) => word.length > 2));
 	}
 	return {
 		board,

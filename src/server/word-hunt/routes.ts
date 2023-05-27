@@ -2,11 +2,7 @@ import { FastifyInstance } from "fastify";
 import { gameSessions } from "../server";
 import httpError from "http-errors";
 
-export default (
-	fastify: FastifyInstance,
-	opts: any,
-	done: (err?: Error | undefined) => void
-) => {
+export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefined) => void) => {
 	fastify.get<{
 		Params: { sessionId: string };
 	}>("/board/:sessionId", (req, res) => {
@@ -17,7 +13,7 @@ export default (
 			res.send(httpError.InternalServerError);
 			return;
 		}
-		
+
 		res.send(rhetBoard);
 	});
 
