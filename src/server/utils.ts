@@ -14,7 +14,9 @@ export function setGameScore(
 	score: number,
 	force: boolean = false
 ) {
-	fastify.log.info(`Changing score of player ${userId} to ${score}, force=${force}`);
+	fastify.log.info(
+		`Changing score of player ${userId} to ${score}, force=${force}`
+	);
 
 	if (gameSession.inlineId) {
 		api.setGameScoreInline(gameSession.inlineId, parseInt(userId), score, {
@@ -54,9 +56,13 @@ export async function getGameScoreObj(
 		fastify.log.error(err);
 	}
 
-	return gameScores?.find(
+	const foundScore = gameScores?.find(
 		(gameScore) => gameScore.user.id === parseInt(userId)
 	);
+
+	fastify.log.debug(`Found score: ${foundScore}`);
+
+	return foundScore;
 }
 
 /**
@@ -72,8 +78,6 @@ export async function incrementGameScore(
 	playerId: string
 ) {
 	const oldScoreObj = await getGameScoreObj(gameSession, api, playerId);
-
-	fastify.log.debug(`incrementGameScore: oldScoreObj=${oldScoreObj}`);
 
 	setGameScore(
 		gameSession,

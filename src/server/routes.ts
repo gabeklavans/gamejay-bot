@@ -165,13 +165,13 @@ async function handleNewScore(
 		});
 
 	if (oldScoredPlayers.length < 1) {
-		fastify.log.debug("Not enough scored players to determine winner");
+		fastify.log.info("Not enough scored players to determine winner");
 		return;
 	}
 
 	// handle this edge-case up front to make the rest of the logic work
 	if (oldScoredPlayers.length == 1 && oldScoredPlayers[0].score >= newScore) {
-		fastify.log.debug(`First scoring player ${oldScoredPlayers[0].id} won`);
+		fastify.log.info(`First scoring player ${oldScoredPlayers[0].id} won`);
 
 		gameSession.winnerIds = [oldScoredPlayers[0].id];
 		await incrementGameScore(gameSession, botApi, oldScoredPlayers[0].id);
@@ -182,14 +182,14 @@ async function handleNewScore(
 	);
 
 	if (newScore == oldHighScore) {
-		fastify.log.debug(
+		fastify.log.info(
 			`Player ${scoringPlayerId} tied with [${gameSession.winnerIds}]`
 		);
 
 		gameSession.winnerIds.push(scoringPlayerId);
 		await incrementGameScore(gameSession, botApi, scoringPlayerId);
 	} else if (newScore > oldHighScore) {
-		fastify.log.debug(
+		fastify.log.info(
 			`Player ${scoringPlayerId} beat old score of ${oldHighScore} with ${newScore}`
 		);
 
