@@ -20,18 +20,18 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 			userId: string;
 			userName: string;
 		};
-	}>("/join-game/:inlineId/:userId/:userName", async (req, res) => {
+	}>("/join-game/:inlineId/:userId/:userName", async (req, reply) => {
 		const { inlineId, userId, userName } = req.params;
 		if (!userId) {
 			fastify.log.error(`Invalid URL params, userId: ${userId}.`);
-			res.send(httpError.BadRequest);
+			reply.send(httpError.BadRequest);
 			return;
 		}
 
 		const sessionId = hashTgCallback("pingas", inlineId);
 		const chatInfo = { inlineId };
 
-		await handleJoinSession(sessionId, chatInfo, userId, userName, res);
+		await handleJoinSession(sessionId, chatInfo, userId, userName, reply);
 	});
 
 	fastify.get<{
@@ -41,18 +41,18 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 			userId: string;
 			userName: string;
 		};
-	}>("/join-game/:chatId/:messageId/:userId/:userName", async (req, res) => {
+	}>("/join-game/:chatId/:messageId/:userId/:userName", async (req, reply) => {
 		const { chatId, messageId, userId, userName } = req.params;
 		if (!userId) {
 			fastify.log.error(`Invalid URL params, userId: ${userId}.`);
-			res.send(httpError.BadRequest);
+			reply.send(httpError.BadRequest);
 			return;
 		}
 
 		const sessionId = hashTgCallback(chatId, messageId);
 		const chatInfo = { chatId, messageId };
 
-		await handleJoinSession(sessionId, chatInfo, userId, userName, res);
+		await handleJoinSession(sessionId, chatInfo, userId, userName, reply);
 	});
 
 	fastify.patch<{
@@ -60,10 +60,12 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 			sessionId: string;
 			userId: string;
 		};
-	}>("/start-game/:sessionId/:userId", async (req, res) => {
+	}>("/start-game/:sessionId/:userId", async (req, reply) => {
 		const { sessionId, userId } = req.params;
 
-		handlePlayerStart(sessionId, userId);
+		const success = handlePlayerStart(sessionId, userId);
+
+		reply.status(success ? 200 : 500).send();
 	});
 
 	fastify.post<{
@@ -88,7 +90,7 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 				},
 			},
 		},
-		(req) => {
+		(req, reply) => {
 			const { sessionId, userId } = req.params;
 
 			if (!sessionId || !userId) {
@@ -101,19 +103,19 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 
 			if (!gameSession) {
 				fastify.log.error(`Session with ID ${sessionId} does not exist.`);
-				return;
+				return reply.status(500).send();
 			}
 			if (!gameSession.players[userId]) {
 				fastify.log.error(`User ${userId} did not join this game.`);
-				return;
+				return reply.status(500).send();
 			}
 			if (gameSession.players[userId].score) {
 				fastify.log.error(`User ${userId} already submitted a score of ${gameSession.players[userId]}.`);
-				return;
+				return reply.status(500).send();
 			}
 			if (score < 0) {
 				fastify.log.error(`Score of ${score} is less than 0.`);
-				return;
+				return reply.status(500).send();
 			}
 
 			gameSession.turnCount++;
@@ -134,6 +136,8 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 			if (gameSession.turnCount == TURN_MAX[gameSession.game]) {
 				endSession(sessionId);
 			}
+
+			reply.status(200).send();
 		}
 	);
 

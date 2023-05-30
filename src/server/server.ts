@@ -80,10 +80,10 @@ if (process.env.NODE_ENV === "production") {
 	);
 }
 
-fastify.setErrorHandler((err, req, res) => {
+fastify.setErrorHandler((err, req, reply) => {
 	fastify.log.error(err);
 
-	res.status(500).send();
+	reply.status(500).send();
 });
 
 export default async function startServer() {

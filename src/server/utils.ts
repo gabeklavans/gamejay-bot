@@ -131,14 +131,17 @@ export async function handleJoinSession(
  */
 export function handlePlayerStart(sessionId: string, userId: string) {
 	if (!gameSessions[sessionId]) {
-		console.error("handlePlayerStart: Session not found");
+		fastify.log.error("handlePlayerStart: Session not found");
+		return false;
 	}
 
 	if (!gameSessions[sessionId].players[userId]) {
-		console.error("handlePlayerStart: User not found in session");
+		fastify.log.error("handlePlayerStart: User not found in session");
+		return false;
 	}
 
 	gameSessions[sessionId].players[userId].started = true;
+	return true;
 }
 
 /**

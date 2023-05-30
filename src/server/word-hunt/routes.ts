@@ -5,27 +5,27 @@ import httpError from "http-errors";
 export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefined) => void) => {
 	fastify.get<{
 		Params: { sessionId: string };
-	}>("/board/:sessionId", (req, res) => {
+	}>("/board/:sessionId", (req, reply) => {
 		const { sessionId } = req.params;
 
 		const rhetBoard = gameSessions[sessionId].board;
 		if (!rhetBoard) {
-			res.send(httpError.InternalServerError);
+			reply.send(httpError.InternalServerError);
 			return;
 		}
 
-		res.send(rhetBoard);
+		reply.send(rhetBoard);
 	});
 
 	fastify.get<{
 		Params: { sessionId: string };
-	}>("/session/:sessionId", (req, res) => {
+	}>("/session/:sessionId", (req, reply) => {
 		const { sessionId } = req.params;
 
 		const session = gameSessions[sessionId];
 
 		if (!session) {
-			res.send(httpError.NotFound);
+			reply.send(httpError.NotFound);
 			return;
 		}
 
@@ -35,7 +35,7 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 			done: session.done,
 		};
 
-		res.send(sessionView);
+		reply.send(sessionView);
 	});
 
 	done();
