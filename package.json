@@ -11,7 +11,7 @@
     "clean": "rimraf dist",
     "build": "npm run clean && tsc",
     "start": "node dist/main",
-    "dev": "nodemon src/main.ts | pino-pretty",
+    "dev": "bun --watch run src/main.ts | pino-pretty",
     "format": "prettier --write src"
   },
   "repository": {
@@ -28,6 +28,7 @@
     "@types/http-errors": "^1.8.2",
     "@types/node": "^18.15.3",
     "@types/nspell": "^2.1.3",
+    "bun-types": "^1.0.1",
     "nodemon": "^2.0.21",
     "pino-pretty": "^10.0.0",
     "prettier": "^2.8.8",
@@ -39,7 +40,6 @@
     "@fastify/cors": "^8.2.1",
     "@fastify/swagger": "^8.3.1",
     "@fastify/swagger-ui": "^1.5.0",
-    "correct-frequency-random-letters": "^1.0.1",
     "dictionary-en": "^3.2.0",
     "dotenv": "^16.0.3",
     "fastify": "^4.14.1",
