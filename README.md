@@ -28,32 +28,32 @@ For each supported game, there will be a folder under `src/server` that contains
 Each game is intended to be a completely separately hosted website. This backend server will handle sending the right URL for the requested game to the user, and will process the game logic for each session of each game. Every game's site should have a URL that points back to this server so that it knows where to send the updates for the game session.
 
 ## Environment
- - Should run on the latest LTS `node` version (if it doesn't, please update and make a PR!)
+ - Runs on latest [bun](https://bun.sh/) (1.0.1 as of writing; will hopefully run on all future releases) ~~Should run on the latest LTS `node` version (if it doesn't, please update and make a PR!)~~
  - Copy the `.example-env` to `.env` in the root and remove comments/update env values to whatever fits your needs
  - Make sure the URLs that are meant to point to the web-games are valid (otherwise this Bot won't know what to send when users request a game)
 
 ## Dev-Ops
  - There is a `.prettierrc` file for code formatting, which I recommend using.
- - There is a `captain-definition` file for deploying to [Caprover](https://caprover.com/), which is what I use to manage my node apps on my server. It's awesome, and if you wanna spin up your own server, you shouldn't really have to change anything there. It reads the `Dockerfile` and uses it to totally set up the environment for the app to run in.
- - There is also an `ecosystem.config.js` for deploying using [pm2](https://pm2.keymetrics.io/), but I don't really use that now that I use Caprover.
+ - A Dockerfile is provided for running on whatever production environemnt you want; I use digital ocean's app platform.
+ - There is also an `ecosystem.config.js` for deploying using [pm2](https://pm2.keymetrics.io/).
 
 ## Start Development Server
  - Install dependencies with:
 ```sh
-npm install
+bun install
 ``` 
- - Tell `nodemon` to spin up a local server in watch mode that can run the typescript source code directly
+ - Start bun in "watch" mode
 ```sh
-npm run dev
+bun run dev
 ``` 
  - You can then take the URL that the server prints out after starting and set that as the backend URL (port included) on all the game sites that you host locally.
 
-## Build & Deploy
- - Transpile and build the app to the `dist` directory
+## Deploy
+ - Install only the production packages
 ```sh
-npm run build
+bun install --production
 ```
- - Then run the built app
+ - Run the entrypoint file
 ```sh
-npm start
+bun start
 ``` 
