@@ -4,10 +4,9 @@
 
 		"rootDir": "src",
 		"outDir": "dist" /* Specify an output folder for all emitted files. */,
-		"typeRoots": ["node_modules/@types", "src/typings"],
 
 		// add Bun type definitions
-		"types": ["bun-types"],
+		"types": ["bun-types", "src/typings/types.d.ts"],
 
 		// enable latest features
 		"lib": ["esnext"],

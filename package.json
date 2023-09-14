@@ -3,14 +3,8 @@
   "version": "0.0.1",
   "description": "Telegram bot for playing games",
   "main": "src/main.ts",
-  "engines": {
-    "node": ">=16",
-    "npm": ">=8"
-  },
   "scripts": {
-    "clean": "rimraf dist",
-    "build": "npm run clean && tsc",
-    "start": "node dist/main",
+    "start": "bun run src/main.ts",
     "dev": "bun --watch run src/main.ts | pino-pretty",
     "format": "prettier --write src"
   },
@@ -26,7 +20,6 @@
   "homepage": "https://github.com/gabeklavans/gamejay-bot#readme",
   "devDependencies": {
     "@types/http-errors": "^1.8.2",
-    "@types/node": "^18.15.3",
     "@types/nspell": "^2.1.3",
     "bun-types": "^1.0.1",
     "nodemon": "^2.0.21",
@@ -41,7 +34,6 @@
     "@fastify/swagger": "^8.3.1",
     "@fastify/swagger-ui": "^1.5.0",
     "dictionary-en": "^3.2.0",
-    "dotenv": "^16.0.3",
     "fastify": "^4.14.1",
     "fastify-disablecache": "^3.1.0",
     "grammy": "^1.15.3",
