@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { FastifyReply } from "fastify";
 import { Api, GrammyError, RawApi } from "grammy";
 import { Server, IncomingMessage, ServerResponse } from "http";
@@ -180,10 +180,10 @@ export function endSession(sessionId: string) {
 }
 
 export function hashTgCallback(chatId: string, messageId: string) {
-	const hash = new Bun.CryptoHasher("sha1");
+	const hash = createHash("sha1");
 	hash.update(chatId);
 	hash.update(messageId);
-	return hash.digest("hex");
+	return hash.digest().toString("base64url");
 }
 
 function handleScoreUpdateErr(err: GrammyError) {

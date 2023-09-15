@@ -28,7 +28,7 @@ For each supported game, there will be a folder under `src/server` that contains
 Each game is intended to be a completely separately hosted website. This backend server will handle sending the right URL for the requested game to the user, and will process the game logic for each session of each game. Every game's site should have a URL that points back to this server so that it knows where to send the updates for the game session.
 
 ## Environment
- - Runs on latest [bun](https://bun.sh/) (1.0.1 as of writing; will hopefully run on all future releases) ~~Should run on the latest LTS `node` version (if it doesn't, please update and make a PR!)~~
+ - Should run on the latest LTS `node` version (if it doesn't, please update and make a PR!)
  - Copy the `.example-env` to `.env` in the root and remove comments/update env values to whatever fits your needs
  - Make sure the URLs that are meant to point to the web-games are valid (otherwise this Bot won't know what to send when users request a game)
 
@@ -40,20 +40,20 @@ Each game is intended to be a completely separately hosted website. This backend
 ## Start Development Server
  - Install dependencies with:
 ```sh
-bun install
+npm install
 ``` 
- - Start bun in "watch" mode
+ - Tell `nodemon` to spin up a local server in watch mode that can run the typescript source code directly
 ```sh
-bun run dev
+npm run dev
 ``` 
  - You can then take the URL that the server prints out after starting and set that as the backend URL (port included) on all the game sites that you host locally.
 
-## Deploy
- - Install only the production packages
+## Build & Deploy
+ - Transpile and build the app to the `dist` directory
 ```sh
-bun install --production
+npm run build
 ```
- - Run the entrypoint file
+ - Then run the built app
 ```sh
-bun start
+npm start
 ``` 

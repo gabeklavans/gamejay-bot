@@ -8,7 +8,6 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 	}>("/board/:sessionId", (req, reply) => {
 		const { sessionId } = req.params;
 
-		fastify.log.debug(gameSessions[sessionId]);
 		const rhetBoard = gameSessions[sessionId].board;
 		if (!rhetBoard) {
 			reply.send(httpError.InternalServerError);
