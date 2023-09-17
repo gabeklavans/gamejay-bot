@@ -39,6 +39,7 @@
     "@fastify/cors": "^8.2.1",
     "@fastify/swagger": "^8.3.1",
     "@fastify/swagger-ui": "^1.5.0",
+    "@supabase/supabase-js": "^2.33.2",
     "correct-frequency-random-letters": "^1.0.1",
     "dictionary-en": "^3.2.0",
     "dotenv": "^16.0.3",
