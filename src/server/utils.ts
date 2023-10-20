@@ -78,7 +78,7 @@ export async function decrementGameScore(gameSession: GameSession, api: Api<RawA
 		return;
 	}
 
-	setGameScore(gameSession, api, playerId, oldScoreObj.score - 1, true);
+	setGameScore(gameSession, api, playerId, oldScoreObj.score - 1);
 }
 
 export async function handleJoinSession(
