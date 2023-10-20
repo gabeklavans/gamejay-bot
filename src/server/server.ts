@@ -71,6 +71,8 @@ if (process.env.NODE_ENV === "production") {
 				console.error("Error with webhookCallback!");
 				if (err.message.includes("Cannot read properties of undefined (reading 'update_id')")) {
 					fastify.log.warn("update_id was missing in webhook callback... consider if this is a problem");
+				} else if (err.message.includes("Cannot read properties of undefined (reading 'init')")) {
+					fastify.log.warn("init was missing in webhook callback... consider if this is a problem");
 				} else {
 					throw err;
 				}
