@@ -85,7 +85,7 @@ function searchGames(query?: string) {
 }
 
 export default function startBot() {
-	if (process.env.NODE_ENV === "development") {
+	if (process.env.USE_WEBHOOK !== "True") {
 		bot.start();
 		console.log("Bot started polling-mode");
 	}
