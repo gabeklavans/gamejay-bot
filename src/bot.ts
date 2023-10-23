@@ -1,5 +1,8 @@
 import { Bot, GrammyError, InlineKeyboard } from "grammy";
 import { GAME_LIST, GAME_START_BUTTON_TEXT } from "./constants";
+import { decrementGameScore, incrementGameScore, setGameScore } from "./server/utils";
+import { fastify, GameSession } from "./server/server";
+import { Game } from "./constants"
 
 if (!process.env.BOT_API_KEY) {
 	console.error("environment misconfigured");
@@ -16,6 +19,87 @@ bot.command("game", async (ctx) => {
 	await ctx.replyWithGame(process.env.WORD_HUNT_SHORTNAME as string, {
 		reply_markup: startingInlineKeyboard,
 	});
+});
+
+bot.command("reset", async (ctx) => {
+	if (process.env.NODE_ENV !== "development") {
+		fastify.log.warn(`User "${ctx.msg.from}" tried to use "reset"!`);
+		return;
+	}
+
+	const repliedMsgId = ctx.msg.reply_to_message?.message_id;
+	if (!repliedMsgId) {
+		ctx.reply("Please reply to a valid game message!");
+		return;
+	}
+
+	const spoofSession: GameSession = {
+		game: Game.WORD_HUNT,	
+		turnCount: 0,
+		messageId: repliedMsgId.toString(),
+		chatId: ctx.chat.id.toString(),
+		players: {},
+		winnerIds: [],
+		done: true
+	}
+
+	setGameScore(spoofSession, bot.api, ctx.msg.from!.id.toString(), 0, true);
+
+	await ctx.reply("reset youre score to 0!");
+});
+
+bot.command("dec", async (ctx) => {
+	if (process.env.NODE_ENV !== "development") {
+		fastify.log.warn(`User "${ctx.msg.from}" tried to use "dec"!`);
+		return;
+	}
+
+	const repliedMsgId = ctx.msg.reply_to_message?.message_id;
+	if (!repliedMsgId) {
+		ctx.reply("Please reply to a valid game message!");
+		return;
+	}
+
+	const spoofSession: GameSession = {
+		game: Game.WORD_HUNT,	
+		turnCount: 0,
+		messageId: repliedMsgId.toString(),
+		chatId: ctx.chat.id.toString(),
+		players: {},
+		winnerIds: [],
+		done: true
+	}
+
+	await decrementGameScore(spoofSession, bot.api, ctx.msg.from!.id.toString());
+
+	await ctx.reply("decremented your score!");
+});
+
+bot.command("inc", async (ctx) => {
+	if (process.env.NODE_ENV !== "development") {
+		fastify.log.warn(`User "${ctx.msg.from}" tried to use "inc"!`);
+		return;
+	}
+
+	const repliedMsgId = ctx.msg.reply_to_message?.message_id;
+	if (!repliedMsgId) {
+		ctx.reply("please reply to a valid game message!");
+		return;
+	}
+
+	const spoofSession: GameSession = {
+		game: Game.WORD_HUNT,	
+		turnCount: 0,
+		messageId: repliedMsgId.toString(),
+		chatId: ctx.chat.id.toString(),
+		players: {},
+		winnerIds: [],
+		done: true
+	}
+
+	await incrementGameScore(spoofSession, bot.api, ctx.msg.from!.id.toString());
+
+	await ctx.reply("incremented your score!");
 });
 
 bot.on("callback_query:game_short_name", async (ctx) => {
