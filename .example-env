@@ -5,3 +5,4 @@ SERVER_URL=http://localhost:3000 (URL this app is hosted on)
 WEBHOOK_SECRET=randomstring (for the Telegram bot's webhook service)
 WORD_HUNT_SHORTNAME=who
 WORD_HUNT_URL=http://localhost:8081 (URL the word hunt web-game is hosted on)
+USE_WEBHOOK=False

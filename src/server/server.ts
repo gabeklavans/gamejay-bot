@@ -63,7 +63,7 @@ fastify.register(swaggerUI, {
 fastify.register(mainRoutes);
 fastify.register(whoRoutes, { prefix: "/who" });
 
-if (process.env.NODE_ENV === "production") {
+if (process.env.USE_WEBHOOK === "True") {
 	fastify.post(
 		`/${process.env.WEBHOOK_SECRET}`,
 		{
@@ -100,7 +100,7 @@ export default async function startServer() {
 				process.exit(1);
 			}
 			// await fastify.oas();
-			if (process.env.NODE_ENV === "production") {
+			if (process.env.USE_WEBHOOK === "True") {
 				await bot.api.setWebhook(`${process.env.SERVER_URL}/${process.env.WEBHOOK_SECRET}`);
 				console.log("Bot webhook set");
 			}
