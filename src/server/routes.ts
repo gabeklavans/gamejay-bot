@@ -147,7 +147,7 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 function updateInlineKeyboard(gameSession: GameSession) {
 	const inlineKeyboard = new InlineKeyboard().game(GAME_START_BUTTON_TEXT).row();
 	Object.values(gameSession.players).forEach((player, idx) => {
-		inlineKeyboard.text(`${player.name}: ${player.score ?? "DNF"}`);
+		inlineKeyboard.text(`${player.name}: ${player.score ?? "..."}`);
 		if (idx % 2 == 1) inlineKeyboard.row();
 	});
 
