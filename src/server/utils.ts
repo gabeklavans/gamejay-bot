@@ -118,8 +118,6 @@ export async function handleJoinSession(
 				res.redirect(`${GAME_URL[Game.WORD_HUNT]}?session=${sessionId}&user=${userId}&spectate=true`);
 				break;
 		}
-		// TODO: implement spectator mode
-		// Gabe, later: I'm not sure what I meant by this...
 	}
 }
 
