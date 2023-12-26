@@ -19,6 +19,7 @@ type ChatInfo = {
 };
 
 type ResultsBody = {
+	partial: boolean;
 	score: number;
 	words: string[];
 };

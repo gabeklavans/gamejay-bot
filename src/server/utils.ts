@@ -102,6 +102,7 @@ export async function handleJoinSession(
 			words: [],
 			name: userName,
 			started: false,
+			done: false
 		};
 	}
 

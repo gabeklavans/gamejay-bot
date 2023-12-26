@@ -121,6 +121,7 @@ export type GameSession = {
 			words?: string[];
 			name: string;
 			started: boolean;
+			done: boolean; // attempt to prevent post-game score changing
 		};
 	};
 	winnerIds: string[]; // state used for score-keeping
