@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyReply } from "fastify";
-import { Api, InlineKeyboard } from "grammy";
+import { Api, GrammyError, InlineKeyboard } from "grammy";
 import httpError from "http-errors";
 import { bot } from "../bot";
 import { GAME_START_BUTTON_TEXT, Game, TURN_MAX } from "../constants";
@@ -84,6 +84,7 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 				body: {
 					type: "object",
 					properties: {
+						partial: { type: "boolean" }, // support for mid-turn updates
 						score: { type: "number" },
 						words: { type: "array", items: { type: "string" } },
 					},
@@ -109,8 +110,11 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 				fastify.log.error(`User ${userId} did not join this game.`);
 				return reply.status(500).send();
 			}
-			if (gameSession.players[userId].score) {
-				fastify.log.error(`User ${userId} already submitted a score of ${gameSession.players[userId]}.`);
+				
+			const player = gameSession.players[userId];
+
+			if (player.done) {
+				fastify.log.error(`User ${userId} already submitted a final score of ${player}.`);
 				return reply.status(500).send();
 			}
 			if (score < 0) {
@@ -118,18 +122,20 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 				return reply.status(500).send();
 			}
 
-			gameSession.turnCount++;
+			player.score = score;
 
-			handleNewScore(gameSession, userId, score).catch(console.error);
-
-			gameSession.players[userId].score = score;
+			if (!body.partial) {
+				handleNewScore(gameSession, userId, score).catch(console.error);
+				player.done = true;
+			}
 
 			updateInlineKeyboard(gameSession);
 
-			// set game-specific values here
+			// perform game-specific actions here
+			// this includes turn-increment logic
 			switch (gameSession.game) {
 				case Game.WORD_HUNT:
-					gameSession.players[userId].words = body.words;
+					player.words = body.words;
 					break;
 			}
 
@@ -147,16 +153,24 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 function updateInlineKeyboard(gameSession: GameSession) {
 	const inlineKeyboard = new InlineKeyboard().game(GAME_START_BUTTON_TEXT).row();
 	Object.values(gameSession.players).forEach((player, idx) => {
-		inlineKeyboard.text(`${player.name}: ${player.score ?? "..."}`);
+		inlineKeyboard.text(`${player.name}: ${player.done ? player.score : "..."}`);
 		if (idx % 2 == 1) inlineKeyboard.row();
 	});
 
+	function handleEditErr(err: GrammyError) {
+		if (err.description.includes("exactly the same")) {
+			fastify.log.debug("inline button unchanged")
+		} else {
+			fastify.log.error(err);
+		}
+	}
+
 	if (gameSession.inlineId) {
-		bot.api.editMessageReplyMarkupInline(gameSession.inlineId, { reply_markup: inlineKeyboard });
+		bot.api.editMessageReplyMarkupInline(gameSession.inlineId, { reply_markup: inlineKeyboard })
+			.catch(handleEditErr);
 	} else if (gameSession.chatId && gameSession.messageId) {
-		bot.api.editMessageReplyMarkup(gameSession.chatId, parseInt(gameSession.messageId), {
-			reply_markup: inlineKeyboard,
-		});
+		bot.api.editMessageReplyMarkup(gameSession.chatId, parseInt(gameSession.messageId), { reply_markup: inlineKeyboard })
+			.catch(handleEditErr);
 	} else {
 		fastify.log.error(`updateInlineKeyboard: game session doesn't have an associated message`);
 	}
@@ -166,7 +180,7 @@ async function handleNewScore(gameSession: GameSession, scoringPlayerId: string,
 	const botApi = new Api(process.env.BOT_API_KEY!);
 
 	const oldScoredPlayers = Object.entries(gameSession.players)
-		.filter((scoredPlayer) => scoredPlayer[1].score != undefined)
+		.filter((scoredPlayer) => scoredPlayer[1].done)
 		.map((scoredPlayer) => {
 			return {
 				id: scoredPlayer[0],

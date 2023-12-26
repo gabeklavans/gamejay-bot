@@ -97,29 +97,28 @@ export async function handleJoinSession(
 	// add player to session if possible
 	// NOTE: this probably isn't a race condition? Node is single-threaded right?
 	if (!session.players[userId] && Object.keys(session.players).length < PLAYER_MAX[session.game]) {
-		const session = gameSessions[sessionId];
 		session.players[userId] = {
 			words: [],
 			name: userName,
 			started: false,
+			done: false
 		};
 	}
 
 	// determine where to redirect the browser
 	if (session.players[userId] && !session.players[userId].started) {
-		switch (gameSessions[sessionId].game) {
+		switch (session.game) {
 			case Game.WORD_HUNT:
 				res.redirect(`${GAME_URL[Game.WORD_HUNT]}?session=${sessionId}&user=${userId}`);
 				break;
 		}
 	} else {
-		switch (gameSessions[sessionId].game) {
+		switch (session.game) {
 			case Game.WORD_HUNT:
 				res.redirect(`${GAME_URL[Game.WORD_HUNT]}?session=${sessionId}&user=${userId}&spectate=true`);
 				break;
 		}
-		// TODO: implement spectator mode
-		// Gabe, later: I'm not sure what I meant by this...
+		// TODO: implement spectator mode (doesn't matter for word hunt)
 	}
 }
 
