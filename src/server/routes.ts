@@ -110,8 +110,11 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 				fastify.log.error(`User ${userId} did not join this game.`);
 				return reply.status(500).send();
 			}
-			if (gameSession.players[userId].done) {
-				fastify.log.error(`User ${userId} already submitted a final score of ${gameSession.players[userId]}.`);
+				
+			const player = gameSession.players[userId];
+
+			if (player.done) {
+				fastify.log.error(`User ${userId} already submitted a final score of ${player}.`);
 				return reply.status(500).send();
 			}
 			if (score < 0) {
@@ -119,11 +122,11 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 				return reply.status(500).send();
 			}
 
-			gameSession.players[userId].score = score;
+			player.score = score;
 
 			if (!body.partial) {
 				handleNewScore(gameSession, userId, score).catch(console.error);
-				gameSession.players[userId].done = true;
+				player.done = true;
 			}
 
 			updateInlineKeyboard(gameSession);
@@ -132,7 +135,7 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 			// this includes turn-increment logic
 			switch (gameSession.game) {
 				case Game.WORD_HUNT:
-					gameSession.players[userId].words = body.words;
+					player.words = body.words;
 					break;
 			}
 
