@@ -110,7 +110,7 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 				fastify.log.error(`User ${userId} did not join this game.`);
 				return reply.status(500).send();
 			}
-				
+
 			const player = gameSession.players[userId];
 
 			if (player.done) {
@@ -144,7 +144,7 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 			}
 
 			reply.status(200).send();
-		}
+		},
 	);
 
 	done();
@@ -159,17 +159,21 @@ function updateInlineKeyboard(gameSession: GameSession) {
 
 	function handleEditErr(err: GrammyError) {
 		if (err.description.includes("exactly the same")) {
-			fastify.log.debug("inline button unchanged")
+			fastify.log.debug("inline button unchanged");
 		} else {
 			fastify.log.error(err);
 		}
 	}
 
 	if (gameSession.inlineId) {
-		bot.api.editMessageReplyMarkupInline(gameSession.inlineId, { reply_markup: inlineKeyboard })
+		bot.api
+			.editMessageReplyMarkupInline(gameSession.inlineId, { reply_markup: inlineKeyboard })
 			.catch(handleEditErr);
 	} else if (gameSession.chatId && gameSession.messageId) {
-		bot.api.editMessageReplyMarkup(gameSession.chatId, parseInt(gameSession.messageId), { reply_markup: inlineKeyboard })
+		bot.api
+			.editMessageReplyMarkup(gameSession.chatId, parseInt(gameSession.messageId), {
+				reply_markup: inlineKeyboard,
+			})
 			.catch(handleEditErr);
 	} else {
 		fastify.log.error(`updateInlineKeyboard: game session doesn't have an associated message`);
