@@ -7,12 +7,15 @@ import { GameSession, fastify, gameSessions } from "./server";
 
 import who from "./word-hunt/main";
 
+const MAX_SESSIONS = 10000;
+const NUM_DAYS_SESSION_EXPIRED = 1;
+
 export function setGameScore(
 	gameSession: GameSession,
 	api: Api<RawApi>,
 	userId: string,
 	score: number,
-	force: boolean = false
+	force: boolean = false,
 ) {
 	fastify.log.info(`Changing score of player ${userId} to ${score}, force=${force}`);
 
@@ -36,7 +39,7 @@ export async function getGameScoreObj(gameSession: GameSession, api: Api<RawApi>
 			gameScores = await api.getGameHighScores(
 				parseInt(gameSession.chatId),
 				parseInt(gameSession.messageId),
-				parseInt(userId)
+				parseInt(userId),
 			);
 		}
 	} catch (err) {
@@ -81,16 +84,34 @@ export async function decrementGameScore(gameSession: GameSession, api: Api<RawA
 	setGameScore(gameSession, api, playerId, oldScoreObj.score - 1, true);
 }
 
+function cleanupExpiredSessions() {
+	const cutoffDate = new Date();
+	cutoffDate.setDate(cutoffDate.getDate() - NUM_DAYS_SESSION_EXPIRED);
+
+	// TODO: Maybe replace with sorting and binary search
+	// if performance ever becomes an issue
+	for (const id of Object.keys(gameSessions)) {
+		if (gameSessions[id].created < cutoffDate) {
+			delete gameSessions[id];
+		}
+	}
+}
+
 export async function handleJoinSession(
 	sessionId: string,
 	chatInfo: ChatInfo,
 	userId: string,
 	userName: string,
-	res: FastifyReply<Server, IncomingMessage, ServerResponse, any, unknown>
+	res: FastifyReply<Server, IncomingMessage, ServerResponse, any, unknown>,
 ) {
 	if (!gameSessions[sessionId]) {
 		// TODO: Start a wordhunt game by default; will need a way to specify the game later
-		await startSession(Game.WORD_HUNT, chatInfo, sessionId);
+		const sessionCreated = await createSession(Game.WORD_HUNT, chatInfo, sessionId);
+		if (!sessionCreated) {
+			fastify.log.warn(`handleJoinSession: session ${sessionId} not created`);
+			res.redirect("https://http.cat/images/503.jpg");
+			return;
+		}
 	}
 
 	const session = gameSessions[sessionId];
@@ -101,7 +122,7 @@ export async function handleJoinSession(
 			words: [],
 			name: userName,
 			started: false,
-			done: false
+			done: false,
 		};
 	}
 
@@ -144,14 +165,21 @@ export function handlePlayerStart(sessionId: string, userId: string) {
 }
 
 /**
+ * As a side-effect, cleans up expired sesisons
  *
- * @param game The game to join a session of
+ * @param game The game to create a session of
  * @param uid The ID to be used for the session
  * @returns The ID used for the session
  */
-export async function startSession(game: Game, chatInfo: ChatInfo, uid?: string) {
-	const gameId = uid ? uid : randomUUID();
-	gameSessions[gameId] = {
+export async function createSession(game: Game, chatInfo: ChatInfo, sessionId: string) {
+	cleanupExpiredSessions();
+
+	if (Object.keys(gameSessions).length > MAX_SESSIONS) {
+		fastify.log.warn(`createSession: max number of sessions (${MAX_SESSIONS}) reached`);
+		return false;
+	}
+
+	gameSessions[sessionId] = {
 		chatId: chatInfo.chatId,
 		messageId: chatInfo.messageId,
 		inlineId: chatInfo.inlineId,
@@ -160,13 +188,14 @@ export async function startSession(game: Game, chatInfo: ChatInfo, uid?: string)
 		players: {},
 		winnerIds: [],
 		done: false,
+		created: new Date(),
 	};
 	switch (game) {
 		case Game.WORD_HUNT:
-			gameSessions[gameId].board = await who.getBoardWithSolutions();
+			gameSessions[sessionId].board = await who.getBoardWithSolutions();
 			break;
 	}
-	return gameId;
+	return true;
 }
 
 export function endSession(sessionId: string) {

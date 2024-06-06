@@ -126,6 +126,7 @@ export type GameSession = {
 	};
 	winnerIds: string[]; // state used for score-keeping
 	done: boolean;
+    created: Date;
 };
 
 export const gameSessions: {
