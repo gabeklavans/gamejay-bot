@@ -8,7 +8,7 @@ import { GameSession, fastify, gameSessions } from "./server";
 import who from "./word-hunt/main";
 
 const MAX_SESSIONS = 10000;
-const NUM_DAYS_SESSION_EXPIRED = 1;
+const NUM_DAYS_SESSION_EXPIRED = 3;
 
 export function setGameScore(
 	gameSession: GameSession,
