@@ -168,7 +168,11 @@ function updateInlineKeyboard(gameSession: GameSession) {
 		// only show top 8, everyone else needs to train harder
 		.slice(0, 8)
 		.forEach((player, idx) => {
-			inlineKeyboard.text(`${player.done ? idx + 1 : ".."}. ${player.name}`);
+			let inlineText = `${player.done ? idx + 1 : ".."}. ${player.name}`;
+			if (idx === 0 && Object.values(gameSession.players).filter((p) => p.score).length >= 2) {
+				inlineText += " 🏆";
+			}
+			inlineKeyboard.text(inlineText);
 			if (idx % 2 == 1) inlineKeyboard.row();
 		});
 
