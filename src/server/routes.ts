@@ -169,7 +169,7 @@ function updateInlineKeyboard(gameSession: GameSession) {
 		.slice(0, 8)
 		.forEach((player, idx) => {
 			let inlineText = `${player.done ? idx + 1 : ".."}. ${player.name}`;
-			if (idx === 0 && Object.values(gameSession.players).filter((p) => p.score).length >= 2) {
+			if (idx === 0 && Object.values(gameSession.players).filter((p) => p.done).length >= 2) {
 				inlineText += " 🏆";
 			}
 			inlineKeyboard.text(inlineText);
