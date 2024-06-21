@@ -152,10 +152,25 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 
 function updateInlineKeyboard(gameSession: GameSession) {
 	const inlineKeyboard = new InlineKeyboard().game(GAME_START_BUTTON_TEXT).row();
-	Object.values(gameSession.players).forEach((player, idx) => {
-		inlineKeyboard.text(`${player.name}: ${player.done ? player.score : "..."}`);
-		if (idx % 2 == 1) inlineKeyboard.row();
-	});
+	Object.values(gameSession.players)
+		// sort in descending score order
+		.sort((b, a) => {
+			if ((!a.done && !b.done) || (!a.score && !b.score)) {
+				return 0;
+			} else if (!b.done || !b.score) {
+				return 1;
+			} else if (!a.done || !a.score) {
+				return -1;
+			} else {
+				return a.score - b.score;
+			}
+		})
+		// only show top 8, everyone else needs to train harder
+		.slice(0, 8)
+		.forEach((player, idx) => {
+			inlineKeyboard.text(`${player.done ? idx + 1 : ".."}. ${player.name}`);
+			if (idx % 2 == 1) inlineKeyboard.row();
+		});
 
 	function handleEditErr(err: GrammyError) {
 		if (err.description.includes("exactly the same")) {
