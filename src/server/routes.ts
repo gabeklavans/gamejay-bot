@@ -172,7 +172,7 @@ function updateInlineKeyboard(gameSession: GameSession) {
 			if (idx === 0 && Object.values(gameSession.players).filter((p) => p.done).length >= 2) {
 				inlineText += " 🏆";
 			}
-			inlineKeyboard.text(inlineText);
+			inlineKeyboard.text(inlineText, player.score ? player.score.toString() : "waiting...");
 			if (idx % 2 == 1) inlineKeyboard.row();
 		});
 
