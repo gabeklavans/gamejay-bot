@@ -56,6 +56,15 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 	}
 });
 
+// Use the default callback handler to just display its text data.
+// So far, it just displays the score of the player whose button was clicked.
+bot.on("callback_query:data", (ctx) => {
+	ctx.answerCallbackQuery({
+		text: ctx.callbackQuery.data,
+		cache_time: 24 * 60 * 60, // 1 day
+	});
+});
+
 bot.on("inline_query", (ctx) => {
 	const query = ctx.inlineQuery.query;
 	ctx.answerInlineQuery(
@@ -64,9 +73,9 @@ bot.on("inline_query", (ctx) => {
 				type: "game",
 				id: idx.toString(),
 				game_short_name: shortName,
-				reply_markup: startingInlineKeyboard
+				reply_markup: startingInlineKeyboard,
 			};
-		})
+		}),
 	).catch(console.error);
 });
 
@@ -79,7 +88,7 @@ function searchGames(query?: string) {
 		return GAME_LIST.map((game) => game.shortName);
 	} else {
 		return GAME_LIST.filter((game) => game.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map(
-			(game) => game.shortName
+			(game) => game.shortName,
 		);
 	}
 }
