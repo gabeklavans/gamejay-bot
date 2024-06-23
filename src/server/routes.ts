@@ -7,9 +7,9 @@ import { GameSession, fastify, gameSessions } from "./server";
 import {
 	decrementGameScore,
 	endSession,
+	getSessionId,
 	handleJoinSession,
 	handlePlayerStart,
-	hashTgCallback,
 	incrementGameScore,
 } from "./utils";
 
@@ -28,7 +28,7 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 			return;
 		}
 
-		const sessionId = hashTgCallback("pingas", inlineId);
+		const sessionId = getSessionId(inlineId);
 		const chatInfo = { inlineId };
 
 		await handleJoinSession(sessionId, chatInfo, userId, userName, reply);
@@ -49,7 +49,7 @@ export default (fastify: FastifyInstance, opts: any, done: (err?: Error | undefi
 			return;
 		}
 
-		const sessionId = hashTgCallback(chatId, messageId);
+		const sessionId = getSessionId(messageId, chatId);
 		const chatInfo = { chatId, messageId };
 
 		await handleJoinSession(sessionId, chatInfo, userId, userName, reply);

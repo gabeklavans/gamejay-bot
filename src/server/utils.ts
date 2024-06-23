@@ -1,14 +1,13 @@
-import { createHash, randomUUID } from "crypto";
+import { createHash } from "crypto";
 import { FastifyReply } from "fastify";
 import { Api, GrammyError, RawApi } from "grammy";
 import { Server, IncomingMessage, ServerResponse } from "http";
-import { Game, PLAYER_MAX, GAME_URL } from "../constants";
+import { Game, PLAYER_MAX, GAME_URL, NUM_DAYS_SESSION_EXPIRED, MAX_SESSIONS } from "../constants";
 import { GameSession, fastify, gameSessions } from "./server";
+import { differenceInDays } from "date-fns";
+import { SessionExpiredError } from "./errors";
 
 import who from "./word-hunt/main";
-
-const MAX_SESSIONS = 10000;
-const NUM_DAYS_SESSION_EXPIRED = 3;
 
 export function setGameScore(
 	gameSession: GameSession,
@@ -207,7 +206,7 @@ export function endSession(sessionId: string) {
 	// I want this ^ so ppl can go to their games and see things like the scores and potential words (in word hunt)
 }
 
-export function hashTgCallback(chatId: string, messageId: string) {
+export function getSessionId(messageId: string, chatId: string = "pingas") {
 	const hash = createHash("sha1");
 	hash.update(chatId);
 	hash.update(messageId);
@@ -224,4 +223,13 @@ function handleScoreUpdateErr(err: GrammyError) {
 
 export function sortDescendingScore(a: ScoreEntry, b: ScoreEntry) {
 	return (b.score ?? Number.MIN_SAFE_INTEGER) - (a.score ?? Number.MIN_SAFE_INTEGER);
+}
+
+export function throwIfSessionExpired(sessionId: string) {
+	if (
+		gameSessions[sessionId] &&
+		differenceInDays(new Date(), gameSessions[sessionId].created) >= NUM_DAYS_SESSION_EXPIRED
+	) {
+		throw new SessionExpiredError(sessionId);
+	}
 }
