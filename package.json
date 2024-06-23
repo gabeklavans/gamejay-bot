@@ -2,7 +2,7 @@
   "name": "gamejay-bot",
   "version": "0.0.1",
   "description": "Telegram bot for playing games",
-  "main": "src/main.ts",
+  "main": "src/server/server.ts",
   "engines": {
     "node": ">=16",
     "npm": ">=8"
@@ -10,8 +10,8 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && tsc",
-    "start": "node dist/main",
-    "dev": "nodemon src/main.ts | pino-pretty",
+    "start": "node dist/server/server",
+    "dev": "nodemon src/server/server.ts | pino-pretty",
     "format": "prettier --write src"
   },
   "repository": {

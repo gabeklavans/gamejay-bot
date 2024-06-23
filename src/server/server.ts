@@ -1,3 +1,4 @@
+import "dotenv/config";
 import Fastify from "fastify";
 import fastifyCors from "@fastify/cors";
 import disableCache from "fastify-disablecache";
@@ -8,7 +9,7 @@ import mainRoutes from "./routes";
 import { Game } from "../constants";
 
 import who from "./word-hunt/main";
-import { bot } from "../bot";
+import startBotPolling, { bot } from "../bot";
 import { webhookCallback } from "grammy";
 
 export const fastify = Fastify({
@@ -86,7 +87,7 @@ fastify.setErrorHandler((err, req, reply) => {
 	reply.status(500).send();
 });
 
-export default async function startServer() {
+async function startServer() {
 	await who.init();
 
 	fastify.listen(
@@ -107,6 +108,11 @@ export default async function startServer() {
 		}
 	);
 }
+
+// start server loop
+startServer();
+// start bot polling mode, if enabled
+startBotPolling();
 
 export type GameSession = {
 	chatId?: string;
