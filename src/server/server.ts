@@ -63,6 +63,23 @@ fastify.register(swaggerUI, {
 fastify.register(mainRoutes);
 fastify.register(whoRoutes, { prefix: "/who" });
 
+if (process.env.USE_WEBHOOK === "True") {
+	fastify.post(
+		`/${process.env.WEBHOOK_SECRET}`,
+		{
+			onError: (req, res, err) => {
+				console.error("Error with webhookCallback!");
+				if (err.message.includes("Cannot read properties of undefined (reading 'update_id')")) {
+					fastify.log.warn("update_id was missing in webhook callback... consider if this is a problem");
+				} else {
+					throw err;
+				}
+			},
+		},
+		webhookCallback(bot, "fastify")
+	);
+}
+
 fastify.setErrorHandler((err, req, reply) => {
 	fastify.log.error(err);
 
@@ -86,26 +103,8 @@ export default async function startServer() {
 			if (process.env.USE_WEBHOOK === "True") {
 				await bot.api.setWebhook(`${process.env.SERVER_URL}/${process.env.WEBHOOK_SECRET}`);
 				console.log("Bot webhook set");
-
-				// set webhook response route
-				fastify.post(
-					`/${process.env.WEBHOOK_SECRET}`,
-					{
-						onError: (req, res, err) => {
-							console.error("Error with webhookCallback!");
-							if (err.message.includes("Cannot read properties of undefined (reading 'update_id')")) {
-								fastify.log.warn(
-									"update_id was missing in webhook callback... consider if this is a problem",
-								);
-							} else {
-								throw err;
-							}
-						},
-					},
-					webhookCallback(bot, "fastify"),
-				);
 			}
-		},
+		}
 	);
 }
 
@@ -127,7 +126,7 @@ export type GameSession = {
 	};
 	winnerIds: string[]; // state used for score-keeping
 	done: boolean;
-	created: Date;
+    created: Date;
 };
 
 export const gameSessions: {
