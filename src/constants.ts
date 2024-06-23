@@ -22,6 +22,3 @@ export const TURN_MAX: { [key in Game]: number } = {
 };
 
 export const GAME_START_BUTTON_TEXT = "Play now!"
-
-export const MAX_SESSIONS = 10000;
-export const NUM_DAYS_SESSION_EXPIRED = 3;

@@ -1,7 +1,5 @@
 import { Bot, GrammyError, InlineKeyboard } from "grammy";
 import { GAME_LIST, GAME_START_BUTTON_TEXT } from "./constants";
-import { getSessionId, throwIfSessionExpired } from "./server/utils";
-import { SessionExpiredError } from "./server/errors";
 
 if (!process.env.BOT_API_KEY) {
 	console.error("environment misconfigured");
@@ -33,33 +31,23 @@ bot.on("callback_query:game_short_name", async (ctx) => {
 		if (ctx.callbackQuery.message) {
 			const chatId = ctx.callbackQuery.message.chat.id;
 			const messageId = ctx.callbackQuery.message.message_id;
-			const sessionId = getSessionId(messageId.toString(), chatId.toString());
-			throwIfSessionExpired(sessionId);
-			const url = `${process.env.SERVER_URL}/join-game/${chatId}/${messageId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}`;
-			await ctx.answerCallbackQuery({ url });
+			await ctx.answerCallbackQuery({
+				url: `${process.env.SERVER_URL}/join-game/${chatId}/${messageId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}`,
+			});
 		}
 		if (ctx.callbackQuery.inline_message_id) {
 			const inlineId = ctx.callbackQuery.inline_message_id;
-			const sessionId = getSessionId(inlineId.toString());
-			throwIfSessionExpired(sessionId);
-			const url = `${process.env.SERVER_URL}/join-game/${inlineId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}`;
-			await ctx.answerCallbackQuery({ url });
+			await ctx.answerCallbackQuery({
+				url: `${process.env.SERVER_URL}/join-game/${inlineId}/${ctx.callbackQuery.from.id}/${ctx.callbackQuery.from.first_name}`,
+			});
 		} else {
 			await ctx.answerCallbackQuery({
-				text: `This game has gone missing... Try starting a new one!.`,
+				text: `This game has gone missing... Try creating a new game request.`,
 				show_alert: true,
 			});
 		}
 	} catch (err) {
-		if (err instanceof SessionExpiredError) {
-			return await ctx.answerCallbackQuery({
-				text: "This game has expired. Try starting a new one!",
-				show_alert: true,
-			});
-		}
-
 		console.error(err);
-
 		ctx.answerCallbackQuery({
 			text: `Something went wrong...`,
 		}).catch((err: GrammyError) => {
