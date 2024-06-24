@@ -1,18 +1,24 @@
-import { Bot, GrammyError, InlineKeyboard } from "grammy";
-import { GAME_LIST, GAME_START_BUTTON_TEXT } from "./constants";
+import { Bot, Context, GrammyError, InlineKeyboard } from "grammy";
+import { GAME_LIST, GAME_START_BUTTON_TEXT, WELCOME_MESSAGE } from "./constants";
 import { getSessionId, throwIfSessionExpired } from "./server/utils";
 import { SessionExpiredError } from "./server/errors";
+import { ParseModeFlavor, hydrateReply } from "@grammyjs/parse-mode";
 
 if (!process.env.BOT_API_KEY) {
 	console.error("environment misconfigured");
 }
 
 if (process.env.BOT_API_KEY == null) throw Error("Telegram bot API token is missing.");
-export const bot = new Bot(process.env.BOT_API_KEY!);
+export const bot = new Bot<ParseModeFlavor<Context>>(process.env.BOT_API_KEY!);
+
+bot.use(hydrateReply);
 
 const startingInlineKeyboard = new InlineKeyboard().game(GAME_START_BUTTON_TEXT);
 
-bot.command("start", (ctx) => ctx.reply("Welcome! Up and running."));
+bot.command(
+	"start",
+	async (ctx) => await ctx.replyFmt(WELCOME_MESSAGE, { link_preview_options: { is_disabled: true } }),
+);
 
 bot.command("game", async (ctx) => {
 	await ctx.replyWithGame(process.env.WORD_HUNT_SHORTNAME as string, {

@@ -39,6 +39,7 @@
     "@fastify/cors": "^8.4.0",
     "@fastify/swagger": "^8.12.0",
     "@fastify/swagger-ui": "^1.10.1",
+    "@grammyjs/parse-mode": "^1.10.0",
     "correct-frequency-random-letters": "^1.0.1",
     "date-fns": "^3.6.0",
     "dictionary-en": "^3.2.0",
