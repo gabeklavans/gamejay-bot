@@ -1,0 +1,17 @@
+services:
+  thenobot:
+    build: .
+    env_file: ".env"
+    # required .env file entries:
+    # BOT_API_KEY=
+    # CORS_ACCESS=
+    # LOG_LEVEL=
+    # NODE_ENV=
+    # SERVER_URL=
+    # USE_WEBHOOK=
+    # WEBHOOK_SECRET=
+    # WORD_HUNT_SHORTNAME=
+    # WORD_HUNT_URL=
+    ports:
+      - 8072:80      
+    restart: unless-stopped
