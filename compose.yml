@@ -1,5 +1,5 @@
 services:
-  thenobot:
+  gamejay-bot:
     build: .
     env_file: ".env"
     # required .env file entries:
