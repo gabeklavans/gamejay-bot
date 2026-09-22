@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> I no longer use Telegram due to their investments in LLMs and cryptocurrency shilling. This project will be on pause until I decide a platform that will be more worth my efforts to develop for.
+
 # GameJay Bot
 
 A combination Telegram Bot plus Server for GameJay web-based games.
